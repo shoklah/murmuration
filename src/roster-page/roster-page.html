@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Roster · Mentoring groups</title>
+  <link rel="stylesheet" href="roster-page.css">
+  <script type="module" src="roster-page.js"></script>
+</head>
+<body>
+  <h1>Roster</h1>
+
+  <section>
+    <h2>Students</h2>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Track</th><th>Active</th><th>Working group</th><th>Timeline</th></tr>
+      </thead>
+      <tbody id="students"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Working groups</h2>
+    <ul id="groups" class="lines"></ul>
+    <form id="new-group">
+      <input id="new-group-name" placeholder="Group name" autocomplete="off">
+      <button type="submit">New group</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Your Meet names</h2>
+    <p class="hint">One name per line. Messages from these names never count as a student's.</p>
+    <textarea id="owner-names" rows="3"></textarea>
+  </section>
+
+  <section>
+    <h2>Backup</h2>
+    <p>
+      <button id="export-backup" type="button">Export backup</button>
+      <button id="export-csv" type="button">Export CSV</button>
+      <label>Import backup <input id="import" type="file"></label>
+    </p>
+    <p id="import-error" class="errors" hidden></p>
+  </section>
+</body>
+</html>
