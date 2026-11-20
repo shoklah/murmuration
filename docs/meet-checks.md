@@ -26,8 +26,10 @@ returns a Failure.
   holding the time, `[jsname="biJjHb"]`, and the sender's name next to it; the
   signed-in account's header has only the time, which is how its messages are
   left out. Meet renders some messages twice (a pinned copy) under the same id,
-  so ids are deduplicated. The messages stay in the page with the chat panel
-  closed.
+  so ids are deduplicated. After a page load Meet builds the chat list
+  (`[data-panel-id="2"] [jsname="xySENc"]`) only once its chat panel has been
+  opened; `readChat` opens and closes it once itself, and the messages then
+  stay in the page with the panel closed.
 - **Participants.** `[role="list"][aria-label="Participants"]`, one
   `[role="listitem"]` per person, its `aria-label` the display name. The list
   exists once the People panel has been opened; `readParticipants` opens and
@@ -35,12 +37,16 @@ returns a Failure.
   element reading "People"). Not checked: whether Meet virtualises this list
   in a call of about 40.
 - **Breakout editor.** Opened with "Set up breakout rooms" or "Edit rooms" in
-  the breakout panel, or through the "Breakout rooms Break into smaller
-  groups" meeting tool. It has `input[aria-label="Room count"]`, one
-  `input[aria-label^="Room name"]` per room, and "Open rooms", which the
+  the breakout panel, reached through the "Breakout rooms Break into smaller
+  groups" tool in the "Meeting tools" panel (after a page load that tool only
+  exists once Meeting tools has been opened, and it must be visible before it
+  takes a click). The editor has `input[aria-label="Room count"]` (`min=2`:
+  Meet makes at least 2 rooms, so a one-room plan gets an empty "Spare 1"),
+  one `input[aria-label^="Room name"]` per room, and "Open rooms", which the
   extension never presses. Values are set with the native value setter plus
-  `input` and `change` events, which Meet's model takes (its `aria-label`
-  updates to the new name).
+  `input`, `change`, `focusout` and `blur` events: Meet commits on focus-out,
+  and `blur()` fires nothing while the side panel has the focus. A committed
+  name shows on the room box about a second later.
 - **Rooms and members.** Each room is `[jsname="lhPi8b"]` with
   `data-display-name` = room name (the main call has none); each member is a
   chip `[jsname="XPtOyb"][data-display-name=<person>]` inside it. Typing into

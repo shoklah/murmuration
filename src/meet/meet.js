@@ -2,12 +2,24 @@
 // A classic content script with no imports; `ops` stands alone so it can be
 // pasted into a page to try it.
 
-// Chat: every message element carries Meet's own id in `data-message-id`, and
-// Meet keeps them in the page with the chat panel closed. A run of messages
-// from one person sits under a header holding the time (`jsname=biJjHb`) and,
-// for anyone but the signed-in account, the sender's name. Meet renders some
-// messages twice (a pinned copy) under the same id, so ids are deduplicated.
+// Chat: every message element carries Meet's own id in `data-message-id`. A
+// run of messages from one person sits under a header holding the time
+// (`jsname=biJjHb`) and, for anyone but the signed-in account, the sender's
+// name. Meet renders some messages twice (a pinned copy) under the same id, so
+// ids are deduplicated. Meet only builds the chat list (`CHAT_LIST`) once its
+// chat panel has been opened, then keeps it with the panel closed, so it is
+// opened (and closed again) once when the list isn't there yet.
+const CHAT_LIST = '[data-panel-id="2"] [jsname="xySENc"]';
+
 async function readChat() {
+  if (!document.querySelector(CHAT_LIST)) {
+    const button = document.querySelector('[aria-label^="Chat with everyone"]');
+    if (!button) return { ok: false, op: 'readChat', error: 'The Meet chat was not found. Make sure the call has started, then try again.' };
+    button.click();
+    const listed = await waitFor(() => document.querySelector(CHAT_LIST));
+    button.click();
+    if (!listed) return { ok: false, op: 'readChat', error: "Meet's chat did not appear. Open Meet's chat panel once, then try again." };
+  }
   const messages = [];
   const seen = new Set();
   for (const el of document.querySelectorAll('[data-message-id]')) {
@@ -17,9 +29,6 @@ async function readChat() {
     seen.add(id);
     const sender = chatSender(el);
     if (sender) messages.push({ id, sender, text: textEl.textContent });
-  }
-  if (!seen.size && !document.querySelector('[aria-label^="Chat with everyone"]')) {
-    return { ok: false, op: 'readChat', error: 'The Meet chat was not found. Make sure the call has started, then try again.' };
   }
   return { ok: true, messages };
 }
@@ -73,7 +82,9 @@ async function waitFor(find, ms = 4000) {
 // Breakout rooms: the host's breakout panel has an editor ("Set up breakout
 // rooms", or "Edit rooms" once rooms exist) with a "Room count" number input,
 // one "Room name …" input and one "Participants" input per room, and
-// "Open rooms", which is never pressed here.
+// "Open rooms", which is never pressed here. Meet makes at least the count
+// input's `min` rooms (2); an extra room is named "Spare 1" and stays empty.
+// A room's name reaches its room box (`roomBox`) a moment after its input.
 const ROOM_COUNT = 'input[aria-label="Room count"]';
 const visible = selector => [...document.querySelectorAll(selector)].filter(e => e.offsetParent);
 const roomNameInputs = () => visible('input[aria-label^="Room name"]');
@@ -81,13 +92,14 @@ const roomNameInputs = () => visible('input[aria-label^="Room name"]');
 async function createRooms(names) {
   const editor = await openRoomEditor();
   if (!editor.ok) return { ok: false, op: 'createRooms', error: editor.error };
-  setValue(document.querySelector(ROOM_COUNT), String(names.length));
-  if (!await waitFor(() => roomNameInputs().length === names.length)) {
+  const countInput = document.querySelector(ROOM_COUNT);
+  const count = Math.max(names.length, Number(countInput.min) || 1);
+  setValue(countInput, String(count));
+  if (!await waitFor(() => roomNameInputs().length === count)) {
     return { ok: false, op: 'createRooms', error: `Meet did not make ${names.length} rooms. Create them by hand.` };
   }
-  roomNameInputs().forEach((input, i) => setValue(input, names[i]));
-  const made = roomNameInputs().map(input => input.value);
-  if (made.join('\n') !== names.join('\n')) {
+  roomNameInputs().forEach((input, i) => setValue(input, names[i] ?? `Spare ${i + 1 - names.length}`));
+  if (!await waitFor(() => names.every(name => roomBox(name)))) {
     return { ok: false, op: 'createRooms', error: 'Meet did not take the room names. Create the rooms by hand.' };
   }
   return { ok: true };
@@ -98,11 +110,14 @@ async function openRoomEditor() {
   if (document.querySelector(ROOM_COUNT)?.offsetParent) return { ok: true };
   const editButton = () => visible('[aria-label="Set up breakout rooms"], [aria-label="Edit rooms"]')[0];
   if (!editButton()) {
-    const tool = document.querySelector('[aria-label^="Breakout rooms Break into"]');
+    // The breakout tool sits in the "Meeting tools" panel, built when it first opens.
+    const findTool = () => visible('[aria-label^="Breakout rooms Break into"]')[0];
+    if (!findTool()) document.querySelector('[aria-label="Meeting tools"]')?.click();
+    const tool = await waitFor(findTool, 5000);
     if (!tool) return { ok: false, error: "Meet's breakout rooms were not found. Turn on breakout rooms in the host controls, then try again." };
     tool.click();
   }
-  const button = await waitFor(editButton);
+  const button = await waitFor(editButton, 5000);
   if (!button) return { ok: false, error: "Meet's breakout panel did not open. Open it by hand, then try again." };
   button.click();
   return await waitFor(() => document.querySelector(ROOM_COUNT)?.offsetParent)
@@ -111,12 +126,14 @@ async function openRoomEditor() {
 }
 
 // Sets an input the way typing would, so Meet's own model takes the value.
+// Meet commits on focus-out; `blur()` fires nothing while the side panel has
+// the focus, so the events are sent directly.
 function setValue(input, value) {
-  input.focus();
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));
   input.dispatchEvent(new Event('change', { bubbles: true }));
-  input.blur();
+  input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+  input.dispatchEvent(new FocusEvent('blur'));
 }
 
 // In the editor each room is `[jsname=lhPi8b]` with `data-display-name` set to
@@ -131,7 +148,7 @@ async function assignName(room, name) {
   const fail = error => ({ ok: false, op: 'assignName', error });
   const editor = await openRoomEditor();
   if (!editor.ok) return fail(editor.error);
-  const box = roomBox(room);
+  const box = await waitFor(() => roomBox(room), 2000);
   if (!box) return fail(`No room named ${room} in Meet's breakout panel.`);
   if (inRoom(box, name)) return { ok: true };
   const input = box.querySelector('input[aria-label="Participants"]');
