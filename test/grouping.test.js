@@ -54,6 +54,15 @@ test('a lone student keeps their own room unless they choose Join', () => {
   assert.deepEqual(joined.map(r => [r.name, r.members.length]), [['S02 SE · A', 3], ['S02 SE · B', 3]]);
   assert.ok(joined[1].members.includes('leo'));
 });
+test('Join targets only split rooms, never a lone student\'s own room', () => {
+  const names = rooms => rooms.map(r => [r.name, r.members]);
+  assert.deepEqual(names(planRooms([E('a', 'S02SE', { track: 'SE' }), E('b', 'S03SE', { track: 'SE', lone: 'join' })])),
+    [['S02 SE · A', ['a']], ['S03 SE · A', ['b']]]);
+  assert.deepEqual(names(planRooms([E('p', 'PW', { track: 'SE', lone: 'join' }), E('q', 'S01A2', { track: 'SE' })])),
+    [['Preseason Web · A', ['p']], ['S01 Arc02 · A', ['q']]]);
+  assert.deepEqual(names(planRooms([E('p', 'PW', { track: 'SE' }), E('q', 'S01A2', { track: 'SE', lone: 'join' })])),
+    [['Preseason Web · A', ['p']], ['S01 Arc02 · A', ['q']]]);
+});
 test('joinTarget: nearest lower stage on the path, else higher, else none', () => {
   const R = (name, stage, n) => ({ name, stage, members: Array(n).fill('x') });
   const rooms = [R('Preseason Web · A', 'PW', 3), R('Preseason Data · A', 'PD', 2), R('S02 SE · A', 'S02SE', 4)];

@@ -73,13 +73,15 @@ export function planRooms(entries) {
     groupStage(here).forEach((members, i) =>
       rooms.push({ name: `${label} · ${LETTERS[i]}`, stage: code, members }));
   }
+  // Join targets only the split rooms; own rooms are added after every lone student is placed.
+  const own = [];
   for (const e of lone) {
     const target = e.lone === 'join' ? joinTarget(e.stage, e.track, rooms) : null;
     if (target) target.members.push(e.key);
-    else rooms.push({ name: `${stage(e.stage).label} · A`, stage: e.stage, members: [e.key] });
+    else own.push({ name: `${stage(e.stage).label} · A`, stage: e.stage, members: [e.key] });
   }
   const order = code => STAGES.findIndex(s => s.code === code);
-  return rooms.sort((a, b) => order(a.stage) - order(b.stage));
+  return [...rooms, ...own].sort((a, b) => order(a.stage) - order(b.stage));
 }
 
 export function joinTarget(stageCode, track, rooms) {
