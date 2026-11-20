@@ -25,3 +25,8 @@ test('a wrong file is refused with a readable error', () => {
   for (const text of ['not json', '{}', JSON.stringify({ app: 'meet-mentoring-groups', version: 1, roster: {}, history: [] })])
     assert.throws(() => parseBackup(text), { message: 'This file is not a mentoring-groups backup.' });
 });
+test('CSV keeps names that look like formulas as text', () => {
+  const lines = historyToCsv([{ startedAt: 'd', meetingCode: 'm', students: [S('x', '=HYPERLINK("x")', null, null), S('y', '-2+3', null, null)] }]).split('\n');
+  assert.equal(lines[1].split(',')[2], `"'=HYPERLINK(""x"")"`);
+  assert.equal(lines[2].split(',')[2], "'-2+3");
+});

@@ -26,6 +26,7 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Pages may set a roster student's `track`, `active` or `group`, a group's `name` and `ownerNames` directly; adding students or groups goes through `src/logic/roster.js`.
 - DOM helpers shared by the extension pages (`el`, `button`, `$`) live in `src/dom.js`.
 - Meet operations resolve to `{ ok: true, ... }` or `{ ok: false, op, error }` and never throw; `error` is a sentence the owner can act on.
+- Each Meet op in `src/meet/meet.js` stops within `OP_MS`, below `TIMEOUT_MS` in `src/panel/meet-client.js`; change them together.
 - Chat text and display names are untrusted: put them in the page with `textContent` or DOM nodes, never `innerHTML`.
 - Look up name keys with `Object.hasOwn`, never `in`: keys come from untrusted display names.
 - Write name-keyed entries with `setOwn(obj, key, value)` from `src/logic/roster.js` (an enumerable, writable, configurable `Object.defineProperty`), never `obj[key] =`, so a name like `__proto__` stays an ordinary key.

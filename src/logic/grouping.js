@@ -12,15 +12,23 @@ function smallest(rooms, size = r => r.length) {
   return rooms.reduce((best, r) => (best === null || size(r) < size(best) ? r : best), null);
 }
 
-export function groupStage(entries) {
-  const n = entries.length;
-  const byGroup = {};
+// Entries by working group id, leaving out those with no group.
+export function byGroup(entries) {
+  const groups = new Map();
   for (const e of entries) {
     if (e.group === null) continue;
-    if (!Object.hasOwn(byGroup, e.group)) byGroup[e.group] = [];
-    byGroup[e.group].push(e);
+    if (!groups.has(e.group)) groups.set(e.group, []);
+    groups.get(e.group).push(e);
   }
-  const units = Object.values(byGroup).filter(g => g.length >= 2);
+  return groups;
+}
+
+// Working groups with 2+ members here: they stay together as one unit.
+export const unitsOf = entries => [...byGroup(entries).values()].filter(g => g.length >= 2);
+
+export function groupStage(entries) {
+  const n = entries.length;
+  const units = unitsOf(entries);
   const inUnit = new Set(units.flat());
   const actives = entries.filter(e => e.active && !inUnit.has(e));
   const pairs = [];

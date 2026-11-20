@@ -43,9 +43,9 @@ async function findMeet(meetingCode) {
   return tab && { meet: createMeetClient(tab.tabId), meetingCode: tab.meetingCode };
 }
 
-// Finds the session's Meet once and keeps it until End.
+// Finds the session's Meet, and finds it again once its tab stops answering (e.g. rejoined in a new tab).
 async function ensureMeet(meetingCode) {
-  if (!meet) meet = (await findMeet(meetingCode))?.meet ?? null;
+  if (!meet || meet.lost) meet = (await findMeet(meetingCode))?.meet ?? null;
 }
 
 async function poll() {
@@ -83,6 +83,10 @@ async function fillBreakout() {
   pollTimer = null;
   render();
   await pollRun;
+  if (session !== filled) {
+    filling = false;
+    return;
+  }
   await ensureMeet(filled.meetingCode);
   const result = meet ? await fillRooms(meet, filled, { createRooms: !ownerCreatesRooms }) : null;
   filling = false;
@@ -152,8 +156,11 @@ async function act(change) {
 
 const newBadge = isNew => (isNew ? [el('span', { className: 'badge', textContent: 'new' })] : []);
 
-function stageSelect(key, current) {
-  const select = el('select', { onchange: () => act(() => setStage(session, ctx, key, select.value)) },
+// True from Fill on: plan changes would be lost, so they are switched off.
+const locked = () => session.filled || filling;
+
+function stageSelect(key, current, disabled = false) {
+  const select = el('select', { disabled, onchange: () => act(() => setStage(session, ctx, key, select.value)) },
     el('option', { value: '', textContent: 'stage…', disabled: true }),
     ...STAGES.map(s => el('option', { value: s.code, textContent: s.label })));
   select.value = current ?? '';
@@ -162,10 +169,7 @@ function stageSelect(key, current) {
 
 // A room's size with ★ per active student and ◆ per working group in it.
 function roomSize(room) {
-  const entries = room.members.map(key => rosterEntry(ctx, key));
-  const groups = session.mixWorkingGroups ? [] : entries.map(r => r?.group).filter(Boolean);
-  const units = new Set(groups.filter(g => groups.indexOf(g) !== groups.lastIndexOf(g)));
-  const marks = '★'.repeat(entries.filter(r => r?.active).length) + '◆'.repeat(units.size);
+  const marks = '★'.repeat(room.active) + '◆'.repeat(room.units);
   return marks ? `${room.members.length} ${marks}` : String(room.members.length);
 }
 
@@ -178,10 +182,11 @@ function stageLine(line, lone) {
     return li;
   }
   const joining = lone.choice === 'join' && lone.joinRoom;
+  const disabled = locked();
   li.append(`→ ${lone.name} ${joining ? `joins ${lone.joinRoom}` : 'is alone'}`,
-    button('Keep alone', () => act(() => setLone(session, lone.key, 'alone')), { ariaPressed: String(lone.choice === 'alone') }));
+    button('Keep alone', () => act(() => setLone(session, lone.key, 'alone')), { ariaPressed: String(lone.choice === 'alone'), disabled }));
   if (lone.joinRoom) {
-    li.append(button(`Join ${lone.joinRoom}`, () => act(() => setLone(session, lone.key, 'join')), { ariaPressed: String(lone.choice === 'join') }));
+    li.append(button(`Join ${lone.joinRoom}`, () => act(() => setLone(session, lone.key, 'join')), { ariaPressed: String(lone.choice === 'join'), disabled }));
   }
   return li;
 }
@@ -198,14 +203,8 @@ function memberRow(key) {
   }
   li.append(...newBadge(s.isNew));
   if (s.source === 'guess') li.append(el('span', { className: 'badge', textContent: '?', title: 'Guessed stage' }));
-  if (!session.filled && !filling) li.append(stageSelect(key, s.stage), button('Ignore', () => act(() => setIgnored(session, key, true))));
+  if (!locked()) li.append(stageSelect(key, s.stage), button('Ignore', () => act(() => setIgnored(session, key, true))));
   return li;
-}
-
-// Plan members, then students placed there after Fill.
-function roomMembers(room) {
-  const placed = Object.entries(session.students).filter(([, s]) => s.afterFill && s.room === room.name).map(([key]) => key);
-  return [...room.members, ...placed.filter(key => !room.members.includes(key))];
 }
 
 function fill(list, items) {
@@ -242,13 +241,13 @@ function render() {
   $('unclear-section').hidden = !fill($('unclear'), summary.unclear.map(u => el('li', {},
     el('span', { className: 'label', textContent: u.name }), ...newBadge(u.isNew), ' ',
     el('span', { className: 'message', textContent: u.text }),
-    stageSelect(u.key, u.stage), button('Ignore', () => act(() => setIgnored(session, u.key, true))))));
+    stageSelect(u.key, u.stage, filling), button('Ignore', () => act(() => setIgnored(session, u.key, true)), { disabled: locked() }))));
 
   $('no-answer-count').textContent = `(${summary.noAnswer.length})`;
   $('no-answer-section').hidden = !fill($('no-answer'), summary.noAnswer.map(n => el('li', {},
     el('span', { className: 'label', textContent: n.name }), ...newBadge(n.isNew),
     n.lastStage ? ` last: ${label(n.lastStage)}` : '',
-    stageSelect(n.key, null), button('Ignore', () => act(() => setIgnored(session, n.key, true))))));
+    stageSelect(n.key, null, filling), button('Ignore', () => act(() => setIgnored(session, n.key, true)), { disabled: filling }))));
 
   $('ignored-section').hidden = !fill($('ignored'), summary.ignored.map(i => el('li', {},
     el('span', { className: 'label', textContent: i.name }),
@@ -258,9 +257,9 @@ function render() {
   $('rooms-section').hidden = session.plan === null;
   if (session.plan) {
     $('outdated').hidden = !session.outdated;
-    fill($('rooms'), session.plan.map(room => el('li', { className: 'room' },
+    fill($('rooms'), summary.rooms.map(room => el('li', { className: 'room' },
       el('span', { className: 'label', textContent: room.name }),
-      el('ul', { className: 'lines' }, ...roomMembers(room).map(memberRow)))));
+      el('ul', { className: 'lines' }, ...[...room.members, ...room.placed].map(memberRow)))));
     $('resplit').disabled = session.filled || filling;
     $('filled-note').hidden = !session.filled;
     $('fill').hidden = session.filled;
@@ -284,6 +283,8 @@ function render() {
     `${f.name} wrote ${f.text} after Fill. Move them in Meet if needed.`, stageSelect(f.key, null))));
 
   $('mix').checked = session.mixWorkingGroups;
+  $('mix').disabled = locked();
+  $('end').disabled = filling;
   $('end').textContent = endTimer ? 'Press again to end' : 'End';
 }
 

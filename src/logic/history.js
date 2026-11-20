@@ -29,8 +29,10 @@ export function timeline(history, key) {
 
 const CSV_HEADER = 'date,meeting,name,stage,source,room,active,working group,alone,after fill';
 
+// A leading ' keeps a spreadsheet from reading an untrusted name as a formula.
 function csvField(value) {
-  const text = value == null ? '' : String(value);
+  const raw = value == null ? '' : String(value);
+  const text = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 

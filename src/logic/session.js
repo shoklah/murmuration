@@ -2,7 +2,7 @@
 // Every function changes `session` and `ctx.roster` in place.
 
 import { parseAnswer, resolveStage } from './answers.js';
-import { planRooms, joinTarget, suggestRoom } from './grouping.js';
+import { planRooms, joinTarget, suggestRoom, byGroup, unitsOf } from './grouping.js';
 import { nameKey, isOwner, addStudent, setOwn } from './roster.js';
 import { STAGES } from './stages.js';
 
@@ -42,6 +42,7 @@ export function applyMessage(session, ctx, { id, sender, text }) {
     student.unclear = text;
     return;
   }
+  if (resolved.stage !== student.stage && session.plan?.some(r => r.members.includes(key))) markOutdated(session);
   Object.assign(student, { stage: resolved.stage, source: resolved.guess ? 'guess' : 'answer', fromMessage: text, unclear: null });
   addStudent(ctx.roster, student.name);
   if (resolved.track) ctx.roster.students[key].track = resolved.track;
@@ -136,13 +137,7 @@ export function summarize(session, ctx) {
     return { key: e.key, name: s.name, stage: e.stage, choice: s.lone, joinRoom };
   });
 
-  const byGroup = new Map();
-  for (const e of entries) {
-    if (e.group === null) continue;
-    if (!byGroup.has(e.group)) byGroup.set(e.group, []);
-    byGroup.get(e.group).push(e);
-  }
-  const splitGroups = [...byGroup].filter(([, members]) => new Set(members.map(e => e.stage)).size >= 2)
+  const splitGroups = [...byGroup(entries)].filter(([, members]) => new Set(members.map(e => e.stage)).size >= 2)
     .map(([id, members]) => ({
       group: ctx.roster.groups[id]?.name ?? null,
       members: members.map(e => ({ name: session.students[e.key].name, stage: e.stage })),
@@ -159,10 +154,21 @@ export function summarize(session, ctx) {
     };
   });
 
+  // Each room with its ★ (active students) and ◆ (working-group units) counts, and students placed after Fill.
+  const roomViews = rooms.map(room => {
+    const facts = room.members.map(key => ({ key, ...rosterFacts(session, ctx, key) }));
+    const placed = students.filter(([key, s]) => s.afterFill && s.room === room.name && !room.members.includes(key)).map(([key]) => key);
+    return {
+      name: room.name, stage: room.stage, members: room.members, placed,
+      active: facts.filter(f => f.active).length, units: unitsOf(facts).length,
+    };
+  });
+
   return {
     answers: entries.length,
+    rooms: roomViews,
     stages: STAGES.filter(({ code }) => count(code) >= 1)
-      .map(({ code, label }) => ({ stage: code, label, count: count(code), rooms: rooms.filter(r => r.stage === code) })),
+      .map(({ code, label }) => ({ stage: code, label, count: count(code), rooms: roomViews.filter(r => r.stage === code) })),
     lone,
     unclear: students.filter(([, s]) => s.unclear !== null)
       .map(([key, s]) => ({ key, name: s.name, text: s.unclear, stage: s.stage, isNew: s.isNew })),

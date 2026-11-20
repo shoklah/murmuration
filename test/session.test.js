@@ -139,3 +139,33 @@ test('endSession records each student', () => {
   assert.deepEqual(r.students.find(s => s.key === 'mia'), { key: 'mia', name: 'Mia', stage: 'PW', source: 'guess',
     room: null, active: false, group: null, alone: null, afterFill: false });
 });
+test("a planned student's stage correction after Split marks the plan outdated", () => {
+  const { session, ctx, say } = setup();
+  for (const n of ['A', 'B', 'C', 'D']) say(n, 'S01 arc 1');
+  split(session, ctx);
+  say('A', 'S01 arc 1');   // same stage again: nothing to redo
+  assert.equal(session.outdated, false);
+  say('A', 'S02 SE');
+  assert.deepEqual([session.students.a.stage, session.outdated], ['S02SE', true]);
+});
+test('a lone student is offered only rooms of stages with 2+ students (R3)', () => {
+  const { session, ctx, say } = setup();
+  say('Leo', 'S03 SE');
+  say('Mia', 'S02 SE');
+  assert.deepEqual(summarize(session, ctx).lone.map(l => l.joinRoom), [null, null]);
+});
+test('summary rooms carry plan members, students placed after Fill and ★/◆ counts', () => {
+  const { session, ctx, roster, say } = setup();
+  roster.groups = { g1: { name: 'One' } };
+  for (const n of ['A', 'B', 'C', 'D']) { addStudent(roster, n); say(n, 'S02 DS'); }
+  roster.students.a.group = 'g1'; roster.students.b.group = 'g1'; roster.students.c.active = true;
+  split(session, ctx);
+  markFilled(session);
+  say('Zoe', 'S02 DS');
+  markPlaced(session, 'zoe', 'S02 DS · A');
+  const [room] = summarize(session, ctx).rooms;
+  assert.deepEqual(room, { name: 'S02 DS · A', stage: 'S02DS', members: ['a', 'b', 'c', 'd'], placed: ['zoe'], active: 1, units: 1 });
+  assert.deepEqual(summarize(session, ctx).stages[0].rooms, [room]);
+  setMix(session, true);
+  assert.equal(summarize(session, ctx).rooms[0].units, 0);
+});
