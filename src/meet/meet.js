@@ -22,13 +22,13 @@ async function readChat() {
   }
   const messages = [];
   const seen = new Set();
-  for (const el of document.querySelectorAll('[data-message-id]')) {
+  for (const el of document.querySelector(CHAT_LIST).querySelectorAll('[data-message-id]')) {
     const id = el.getAttribute('data-message-id');
     const textEl = el.querySelector('[jsname="dTKtvb"]');
-    if (seen.has(id) || !textEl) continue;
+    const sender = textEl && chatSender(el);
+    if (seen.has(id) || !sender) continue;
     seen.add(id);
-    const sender = chatSender(el);
-    if (sender) messages.push({ id, sender, text: textEl.textContent });
+    messages.push({ id, sender, text: textEl.textContent });
   }
   return { ok: true, messages };
 }
@@ -70,13 +70,15 @@ function peopleButton() {
     .find(b => document.getElementById(b.getAttribute('aria-labelledby'))?.textContent.trim() === 'People');
 }
 
-// Polls `find` until it returns something truthy, or null after `ms`.
+// Polls `find` until it returns something truthy, or null after `ms`; it
+// always checks at least once.
 async function waitFor(find, ms = 4000) {
-  for (const end = Date.now() + ms; Date.now() < end; await new Promise(r => setTimeout(r, 200))) {
+  const end = Date.now() + ms;
+  for (;;) {
     const found = find();
-    if (found) return found;
+    if (found || Date.now() >= end) return found || null;
+    await new Promise(r => setTimeout(r, 200));
   }
-  return null;
 }
 
 // Breakout rooms: the host's breakout panel has an editor ("Set up breakout
@@ -85,42 +87,47 @@ async function waitFor(find, ms = 4000) {
 // "Open rooms", which is never pressed here. Meet makes at least the count
 // input's `min` rooms (2); an extra room is named "Spare 1" and stays empty.
 // A room's name reaches its room box (`roomBox`) a moment after its input.
+// Each op stops waiting by its deadline, before the panel's 10 s timeout, so
+// it never keeps driving the editor after the panel has given up on it.
 const ROOM_COUNT = 'input[aria-label="Room count"]';
+const OP_MS = 9000;
 const visible = selector => [...document.querySelectorAll(selector)].filter(e => e.offsetParent);
 const roomNameInputs = () => visible('input[aria-label^="Room name"]');
+const left = until => until - Date.now();
 
 async function createRooms(names) {
-  const editor = await openRoomEditor();
+  const until = Date.now() + OP_MS;
+  const editor = await openRoomEditor(until);
   if (!editor.ok) return { ok: false, op: 'createRooms', error: editor.error };
   const countInput = document.querySelector(ROOM_COUNT);
   const count = Math.max(names.length, Number(countInput.min) || 1);
   setValue(countInput, String(count));
-  if (!await waitFor(() => roomNameInputs().length === count)) {
-    return { ok: false, op: 'createRooms', error: `Meet did not make ${names.length} rooms. Create them by hand.` };
+  if (!await waitFor(() => roomNameInputs().length === count, left(until))) {
+    return { ok: false, op: 'createRooms', error: `Meet did not make ${count} rooms. Create them by hand.` };
   }
   roomNameInputs().forEach((input, i) => setValue(input, names[i] ?? `Spare ${i + 1 - names.length}`));
-  if (!await waitFor(() => names.every(name => roomBox(name)))) {
+  if (!await waitFor(() => names.every(name => roomBox(name)), left(until))) {
     return { ok: false, op: 'createRooms', error: 'Meet did not take the room names. Create the rooms by hand.' };
   }
   return { ok: true };
 }
 
 // Opens the breakout panel's editor if it isn't open yet.
-async function openRoomEditor() {
+async function openRoomEditor(until) {
   if (document.querySelector(ROOM_COUNT)?.offsetParent) return { ok: true };
   const editButton = () => visible('[aria-label="Set up breakout rooms"], [aria-label="Edit rooms"]')[0];
   if (!editButton()) {
     // The breakout tool sits in the "Meeting tools" panel, built when it first opens.
     const findTool = () => visible('[aria-label^="Breakout rooms Break into"]')[0];
     if (!findTool()) document.querySelector('[aria-label="Meeting tools"]')?.click();
-    const tool = await waitFor(findTool, 5000);
+    const tool = await waitFor(findTool, left(until));
     if (!tool) return { ok: false, error: "Meet's breakout rooms were not found. Turn on breakout rooms in the host controls, then try again." };
     tool.click();
   }
-  const button = await waitFor(editButton, 5000);
+  const button = await waitFor(editButton, left(until));
   if (!button) return { ok: false, error: "Meet's breakout panel did not open. Open it by hand, then try again." };
   button.click();
-  return await waitFor(() => document.querySelector(ROOM_COUNT)?.offsetParent)
+  return await waitFor(() => document.querySelector(ROOM_COUNT)?.offsetParent, left(until))
     ? { ok: true }
     : { ok: false, error: "Meet's breakout room editor did not open. Open it by hand, then try again." };
 }
@@ -140,15 +147,18 @@ function setValue(input, value) {
 // its name, holding one chip `[jsname=XPtOyb][data-display-name=<person>]`
 // per member. Typing into the room's "Participants" input lists matches in a
 // `[role=listbox][aria-label=Participants]`; clicking one moves that person.
-const sameName = (a, b) => a.trim().replace(/\s+/g, ' ').toLowerCase() === b.trim().replace(/\s+/g, ' ').toLowerCase();
+// `nameKey` from src/logic/roster.js, copied: a content script can't import.
+const nameKey = name => name.normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
+const sameName = (a, b) => nameKey(a) === nameKey(b);
 const roomBox = room => visible('[jsname="lhPi8b"]').find(r => r.getAttribute('data-display-name') === room);
 const inRoom = (box, name) => [...box.querySelectorAll('[jsname="XPtOyb"]')].some(c => sameName(c.getAttribute('data-display-name') ?? '', name));
 
 async function assignName(room, name) {
   const fail = error => ({ ok: false, op: 'assignName', error });
-  const editor = await openRoomEditor();
+  const until = Date.now() + OP_MS;
+  const editor = await openRoomEditor(until);
   if (!editor.ok) return fail(editor.error);
-  const box = await waitFor(() => roomBox(room), 2000);
+  const box = await waitFor(() => roomBox(room), Math.min(2000, left(until)));
   if (!box) return fail(`No room named ${room} in Meet's breakout panel.`);
   if (inRoom(box, name)) return { ok: true };
   const input = box.querySelector('input[aria-label="Participants"]');
@@ -157,13 +167,13 @@ async function assignName(room, name) {
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, name);
   input.dispatchEvent(new Event('input', { bubbles: true }));
   const option = await waitFor(() => visible('[role="listbox"][aria-label="Participants"] [role="option"]')
-    .find(o => sameName(o.innerText, name)));
+    .find(o => sameName(o.innerText, name)), left(until));
   if (!option) {
     setValue(input, '');
     return fail(`${name} is not in the call.`);
   }
   option.click();
-  return await waitFor(() => inRoom(roomBox(room) ?? box, name))
+  return await waitFor(() => inRoom(roomBox(room) ?? box, name), left(until))
     ? { ok: true }
     : fail(`Meet did not put ${name} in ${room}. Put them in it by hand.`);
 }
