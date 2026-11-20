@@ -38,6 +38,13 @@ button[aria-pressed="true"] { font-weight: 600; }
 
 .actions { text-align: right; }
 
+.room > ul { padding-left: 12px; }
+.member .label { font-weight: normal; }
+.fill-result { padding: 6px; border-radius: 4px; background: #dcfce7; }
+.fill-result.failed { background: #fee2e2; }
+.fill-result p { margin: 2px 0; }
+.fake pre { white-space: pre-wrap; margin: 8px 0 0; }
+
 .fake {
   margin-top: 16px;
   padding: 8px;
