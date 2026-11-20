@@ -26,5 +26,6 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Meet operations resolve to `{ ok: true, ... }` or `{ ok: false, op, error }` and never throw; `error` is a sentence the owner can act on.
 - Chat text and display names are untrusted: put them in the page with `textContent` or DOM nodes, never `innerHTML`.
 - Look up name keys with `Object.hasOwn`, never `in`: keys come from untrusted display names.
+- Write name-keyed entries with `Object.defineProperty` (enumerable, writable, configurable), never `obj[key] =`, so a name like `__proto__` stays an ordinary key.
 - No inline `<script>` or `on…=` attributes in extension pages (MV3 content security policy), and no `confirm()` or `alert()` in the side panel.
 - `?fake` on a page means the fake Meet, demo data and an in-memory store, never `chrome.storage`.
