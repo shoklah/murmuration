@@ -2,6 +2,7 @@
 // `?fake` uses the demo roster and history in an in-memory store.
 
 import { createStore } from '../store.js';
+import { el, button } from '../dom.js';
 import { DEMO } from '../panel/demo.js';
 import { createGroup, deleteGroup } from '../logic/roster.js';
 import { timeline, historyToCsv, exportBackup, parseBackup } from '../logic/history.js';
@@ -18,14 +19,6 @@ const $ = id => document.getElementById(id);
 
 let roster;
 let history;
-
-function el(tag, props = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
-}
-
-const button = (text, onclick, props = {}) => el('button', { type: 'button', textContent: text, onclick, ...props });
 
 // Runs a change on the roster, saves it, then re-renders.
 async function act(change) {
@@ -125,6 +118,7 @@ $('import').addEventListener('change', async () => {
 async function open() {
   ({ roster, history } = await store.load());
   store.onChange(changes => {
+    if (!changes.roster && !changes.history) return;
     if (changes.roster) roster = changes.roster;
     if (changes.history) history = changes.history;
     render();

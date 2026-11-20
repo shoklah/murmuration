@@ -3,6 +3,7 @@
 // `?fake` runs on the fake Meet, demo data and an in-memory store.
 
 import { createStore } from '../store.js';
+import { el, button } from '../dom.js';
 import { createMeetClient, findMeetTab } from './meet-client.js';
 import { DEMO } from './demo.js';
 import { createFakeMeet } from '../meet/fake-meet.js';
@@ -32,7 +33,7 @@ let notice = null;
 let pollTimer = null;
 let endTimer = null;
 let rendered = null;
-let polling = false;
+let pollRun = null;
 let filling = false;
 let ownerCreatesRooms = false;
 let fillResult = null;
@@ -48,7 +49,8 @@ async function poll() {
   pollTimer = null;
   const polled = session;
   if (!polled || filling) return;
-  polling = true;
+  let done;
+  pollRun = new Promise(resolve => { done = resolve; });
   try {
     if (!meet) meet = (await findMeet(polled.meetingCode))?.meet ?? null;
     if (session !== polled) return;
@@ -61,7 +63,8 @@ async function poll() {
       await store.save(JSON.stringify(ctx.roster) === before ? { current: session } : { current: session, roster: ctx.roster });
     }
   } finally {
-    polling = false;
+    pollRun = null;
+    done();
   }
   render();
   if (session === polled && !filling) pollTimer = setTimeout(poll, POLL_MS);
@@ -74,6 +77,7 @@ async function fillBreakout() {
   clearTimeout(pollTimer);
   pollTimer = null;
   render();
+  await pollRun;
   if (!meet) meet = (await findMeet(filled.meetingCode))?.meet ?? null;
   const result = meet ? await fillRooms(meet, filled, { createRooms: !ownerCreatesRooms }) : null;
   filling = false;
@@ -90,7 +94,7 @@ async function fillBreakout() {
   }
   await store.save({ current: session });
   render();
-  if (!polling && !pollTimer) poll();
+  if (!pollTimer) poll();
 }
 
 async function start() {
@@ -141,13 +145,6 @@ async function act(change) {
   render();
 }
 
-function el(tag, props = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
-}
-
-const button = (text, onclick, props = {}) => el('button', { type: 'button', textContent: text, onclick, ...props });
 const newBadge = isNew => (isNew ? [el('span', { className: 'badge', textContent: 'new' })] : []);
 const label = code => stage(code)?.label ?? code;
 const rosterEntry = key => (Object.hasOwn(ctx.roster.students, key) ? ctx.roster.students[key] : null);
@@ -198,7 +195,7 @@ function memberRow(key) {
   }
   li.append(...newBadge(s.isNew));
   if (s.source === 'guess') li.append(el('span', { className: 'badge', textContent: '?', title: 'Guessed stage' }));
-  if (!session.filled) li.append(stageSelect(key, s.stage), button('Ignore', () => act(() => setIgnored(session, key, true))));
+  if (!session.filled && !filling) li.append(stageSelect(key, s.stage), button('Ignore', () => act(() => setIgnored(session, key, true))));
   return li;
 }
 
@@ -262,7 +259,7 @@ function render() {
     fill($('rooms'), session.plan.map(room => el('li', { className: 'room' },
       el('span', { className: 'label', textContent: room.name }),
       el('ul', { className: 'lines' }, ...roomMembers(room).map(memberRow)))));
-    $('resplit').disabled = session.filled;
+    $('resplit').disabled = session.filled || filling;
     $('filled-note').hidden = !session.filled;
     $('fill').hidden = session.filled;
     $('fill').disabled = session.outdated || filling;
