@@ -1,1 +1,1 @@
-{"name": "meet-mentoring-groups", "private": true, "type": "module", "scripts": {"test": "node --test"}}
+{"name": "murmuration", "private": true, "type": "module", "scripts": {"test": "node --test"}}

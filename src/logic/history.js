@@ -2,9 +2,9 @@
 import { stageLabel } from './stages.js';
 import { setOwn } from './roster.js';
 
-const BACKUP_APP = 'meet-mentoring-groups';
+const BACKUP_APP = 'meet-mentoring-groups';   // the format id; kept so older backups still import
 const BACKUP_VERSION = 1;
-const NOT_A_BACKUP = 'This file is not a mentoring-groups backup.';
+const NOT_A_BACKUP = 'This file is not a Murmuration backup.';
 
 export function lastKnownStages(history) {
   const stages = {};

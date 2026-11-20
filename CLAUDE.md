@@ -1,4 +1,4 @@
-# Meet mentoring groups
+# Murmuration
 
 Chrome extension (Manifest V3) for the owner only: reads students' stage answers
 from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
