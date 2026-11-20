@@ -7,3 +7,5 @@ export function el(tag, props = {}, ...children) {
 }
 
 export const button = (text, onclick, props = {}) => el('button', { type: 'button', textContent: text, onclick, ...props });
+
+export const $ = id => document.getElementById(id);

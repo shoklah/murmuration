@@ -1,5 +1,6 @@
 // Session history: past stages, CSV export and the JSON backup.
-import { stage } from './stages.js';
+import { stageLabel } from './stages.js';
+import { setOwn } from './roster.js';
 
 const BACKUP_APP = 'meet-mentoring-groups';
 const BACKUP_VERSION = 1;
@@ -10,7 +11,7 @@ export function lastKnownStages(history) {
   for (const record of history) {
     for (const s of record.students) {
       if (s.stage && (s.source === 'answer' || s.source === 'owner')) {
-        Object.defineProperty(stages, s.key, { value: s.stage, enumerable: true, writable: true, configurable: true });
+        setOwn(stages, s.key, s.stage);
       }
     }
   }
@@ -40,7 +41,7 @@ export function historyToCsv(history) {
   for (const record of history) {
     for (const s of record.students) {
       lines.push([
-        record.startedAt, record.meetingCode, s.name, s.stage && stage(s.stage)?.label,
+        record.startedAt, record.meetingCode, s.name, s.stage && stageLabel(s.stage),
         s.source, s.room, yesNo(s.active), s.group, s.alone, yesNo(s.afterFill),
       ].map(csvField).join(','));
     }

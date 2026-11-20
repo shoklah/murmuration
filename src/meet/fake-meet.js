@@ -4,7 +4,7 @@
 export function createFakeMeet({ participants = [], unsupported = [] }) {
   const messages = [];
   const people = [...participants];
-  const fail = op => ({ ok: false, op, error: 'Not supported.' });
+  const fail = (op, error = 'Not supported.') => ({ ok: false, op, error });
 
   const meet = {
     rooms: [],
@@ -28,8 +28,8 @@ export function createFakeMeet({ participants = [], unsupported = [] }) {
     async assignName(room, name) {
       if (unsupported.includes('assignName')) return fail('assignName');
       const target = meet.rooms.find(r => r.name === room);
-      if (!target) return { ok: false, op: 'assignName', error: `No room named ${room}.` };
-      if (!people.includes(name)) return { ok: false, op: 'assignName', error: `${name} is not in the call.` };
+      if (!target) return fail('assignName', `No room named ${room}.`);
+      if (!people.includes(name)) return fail('assignName', `${name} is not in the call.`);
       target.members.push(name);
       return { ok: true };
     },

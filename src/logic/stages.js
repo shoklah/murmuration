@@ -27,6 +27,8 @@ export function stage(code) {
   return STAGES.find(s => s.code === code);
 }
 
+export const stageLabel = code => stage(code)?.label ?? code;
+
 export function tracksOf(code) {
   return TRACKS.filter(track => PATHS[track].includes(code));
 }

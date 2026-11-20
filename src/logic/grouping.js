@@ -6,6 +6,8 @@ import { STAGES, PATHS, stage, tracksOf } from './stages.js';
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 // The room with the fewest members, the first one on ties.
+const size = r => r.members.length;
+
 function smallest(rooms, size = r => r.length) {
   return rooms.reduce((best, r) => (best === null || size(r) < size(best) ? r : best), null);
 }
@@ -30,7 +32,6 @@ export function groupStage(entries) {
   const k = anchors >= 1 && anchors < kSize ? Math.max(Math.ceil(n / 5), anchors) : kSize;
 
   const rooms = Array.from({ length: k }, () => ({ members: [], anchored: false, paired: false }));
-  const size = r => r.members.length;
   const place = (room, people) => room.members.push(...people.map(e => e.key));
 
   for (const unit of [...units].sort((a, b) => b.length - a.length)) {
@@ -92,7 +93,7 @@ export function joinTarget(stageCode, track, rooms) {
     for (let d = 1; ; d++) {
       const codes = paths.map(p => p[p.indexOf(stageCode) + step * d]).filter(Boolean);
       if (codes.length === 0) break;
-      const room = smallest(rooms.filter(r => codes.includes(r.stage)), r => r.members.length);
+      const room = smallest(rooms.filter(r => codes.includes(r.stage)), size);
       if (room) return room;
     }
   }
@@ -102,7 +103,6 @@ export function joinTarget(stageCode, track, rooms) {
 export function suggestRoom(entry, rooms, groupOf) {
   if (entry.stage === null) return null;
   const here = rooms.filter(r => r.stage === entry.stage);
-  const size = r => r.members.length;
   const withGroup = entry.group === null ? undefined : here.find(r =>
     r.members.some(m => Object.hasOwn(groupOf, m) && groupOf[m] === entry.group));
   return withGroup ?? smallest(here, size) ?? joinTarget(entry.stage, entry.track, rooms);

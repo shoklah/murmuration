@@ -3,14 +3,14 @@
 // `?fake` runs on the fake Meet, demo data and an in-memory store.
 
 import { createStore } from '../store.js';
-import { el, button } from '../dom.js';
+import { el, button, $ } from '../dom.js';
 import { createMeetClient, findMeetTab } from './meet-client.js';
 import { DEMO } from './demo.js';
 import { createFakeMeet } from '../meet/fake-meet.js';
 import { syncFromMeet, fillRooms } from '../logic/flow.js';
 import { lastKnownStages } from '../logic/history.js';
-import { createSession, setStage, setIgnored, setLone, setMix, split, markPlaced, summarize, endSession } from '../logic/session.js';
-import { STAGES, stage } from '../logic/stages.js';
+import { createSession, setStage, setIgnored, setLone, setMix, split, markPlaced, summarize, endSession, rosterEntry } from '../logic/session.js';
+import { STAGES, stageLabel as label } from '../logic/stages.js';
 
 const POLL_MS = 2000;
 const END_ARMED_MS = 5000;
@@ -22,8 +22,6 @@ const store = fake
   ? createStore({ memory: true, seed: { roster: DEMO.roster, history: DEMO.history } })
   : createStore();
 const fakeMeet = fake ? createFakeMeet({ participants: DEMO.participants }) : null;
-
-const $ = id => document.getElementById(id);
 
 let ctx;
 let session = null;
@@ -45,6 +43,11 @@ async function findMeet(meetingCode) {
   return tab && { meet: createMeetClient(tab.tabId), meetingCode: tab.meetingCode };
 }
 
+// Finds the session's Meet once and keeps it until End.
+async function ensureMeet(meetingCode) {
+  if (!meet) meet = (await findMeet(meetingCode))?.meet ?? null;
+}
+
 async function poll() {
   pollTimer = null;
   const polled = session;
@@ -52,15 +55,17 @@ async function poll() {
   let done;
   pollRun = new Promise(resolve => { done = resolve; });
   try {
-    if (!meet) meet = (await findMeet(polled.meetingCode))?.meet ?? null;
+    await ensureMeet(polled.meetingCode);
     if (session !== polled) return;
     notice = meet ? null : NO_MEET_TAB;
     if (meet) {
-      const before = JSON.stringify(ctx.roster);
+      const before = { current: JSON.stringify(session), roster: JSON.stringify(ctx.roster) };
       const failures = await syncFromMeet(meet, session, ctx);
       if (session !== polled) return;
       errors = failures;
-      await store.save(JSON.stringify(ctx.roster) === before ? { current: session } : { current: session, roster: ctx.roster });
+      const changed = Object.fromEntries(Object.entries({ current: session, roster: ctx.roster })
+        .filter(([name, value]) => JSON.stringify(value) !== before[name]));
+      if (Object.keys(changed).length) await store.save(changed);
     }
   } finally {
     pollRun = null;
@@ -78,7 +83,7 @@ async function fillBreakout() {
   pollTimer = null;
   render();
   await pollRun;
-  if (!meet) meet = (await findMeet(filled.meetingCode))?.meet ?? null;
+  await ensureMeet(filled.meetingCode);
   const result = meet ? await fillRooms(meet, filled, { createRooms: !ownerCreatesRooms }) : null;
   filling = false;
   if (session !== filled) return;
@@ -94,7 +99,7 @@ async function fillBreakout() {
   }
   await store.save({ current: session });
   render();
-  if (!pollTimer) poll();
+  poll();
 }
 
 async function start() {
@@ -146,8 +151,6 @@ async function act(change) {
 }
 
 const newBadge = isNew => (isNew ? [el('span', { className: 'badge', textContent: 'new' })] : []);
-const label = code => stage(code)?.label ?? code;
-const rosterEntry = key => (Object.hasOwn(ctx.roster.students, key) ? ctx.roster.students[key] : null);
 
 function stageSelect(key, current) {
   const select = el('select', { onchange: () => act(() => setStage(session, ctx, key, select.value)) },
@@ -159,7 +162,7 @@ function stageSelect(key, current) {
 
 // A room's size with ★ per active student and ◆ per working group in it.
 function roomSize(room) {
-  const entries = room.members.map(rosterEntry);
+  const entries = room.members.map(key => rosterEntry(ctx, key));
   const groups = session.mixWorkingGroups ? [] : entries.map(r => r?.group).filter(Boolean);
   const units = new Set(groups.filter(g => groups.indexOf(g) !== groups.lastIndexOf(g)));
   const marks = '★'.repeat(entries.filter(r => r?.active).length) + '◆'.repeat(units.size);
@@ -186,10 +189,10 @@ function stageLine(line, lone) {
 // A room member in the preview: marks, and before Fill, a stage select and Ignore.
 function memberRow(key) {
   const s = session.students[key];
-  const r = rosterEntry(key);
+  const r = rosterEntry(ctx, key);
   const li = el('li', { className: 'member' }, el('span', { className: 'label', textContent: s.name, title: s.fromMessage ?? '' }));
   if (r) {
-    li.append(button('★', () => act(() => { r.active = !r.active; }), { ariaPressed: String(r.active), title: 'Active student' }));
+    li.append(button('★', () => act(() => { const now = rosterEntry(ctx, key); now.active = !now.active; }), { ariaPressed: String(r.active), title: 'Active student' }));
     const group = r.group && ctx.roster.groups[r.group]?.name;
     if (group) li.append(` ◆ ${group}`);
   }
@@ -211,14 +214,13 @@ function fill(list, items) {
 }
 
 function render() {
-  const summary = session && summarize(session, ctx);
+  // Every input of the page, so any change re-renders.
   const state = JSON.stringify({
-    summary, mix: session?.mixWorkingGroups, errors, notice, ended: !endTimer, owners: ctx.roster.ownerNames.length,
-    plan: session?.plan, outdated: session?.outdated, filled: session?.filled, students: session?.students, roster: ctx.roster.students,
-    filling, ownerCreatesRooms, fillResult, fakeRooms: fakeMeet?.rooms,
+    session, ctx, errors, notice, endArmed: !!endTimer, filling, ownerCreatesRooms, fillResult, fakeRooms: fakeMeet?.rooms,
   });
   if (state === rendered) return;
   rendered = state;
+  const summary = session && summarize(session, ctx);
 
   $('owner-warning').hidden = ctx.roster.ownerNames.length > 0;
   $('notice').hidden = notice === null;

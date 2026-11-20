@@ -24,10 +24,10 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Students are keyed by `nameKey(displayName)` from `src/logic/roster.js`; never compare raw display names.
 - Roster, history and the current session are plain JSON objects, changed in place by logic functions and saved whole through `src/store.js` under `chrome.storage.local` keys `roster`, `history`, `current`.
 - Pages may set a roster student's `track`, `active` or `group`, a group's `name` and `ownerNames` directly; adding students or groups goes through `src/logic/roster.js`.
-- DOM helpers shared by the extension pages (`el`, `button`) live in `src/dom.js`.
+- DOM helpers shared by the extension pages (`el`, `button`, `$`) live in `src/dom.js`.
 - Meet operations resolve to `{ ok: true, ... }` or `{ ok: false, op, error }` and never throw; `error` is a sentence the owner can act on.
 - Chat text and display names are untrusted: put them in the page with `textContent` or DOM nodes, never `innerHTML`.
 - Look up name keys with `Object.hasOwn`, never `in`: keys come from untrusted display names.
-- Write name-keyed entries with `Object.defineProperty` (enumerable, writable, configurable), never `obj[key] =`, so a name like `__proto__` stays an ordinary key.
+- Write name-keyed entries with `setOwn(obj, key, value)` from `src/logic/roster.js` (an enumerable, writable, configurable `Object.defineProperty`), never `obj[key] =`, so a name like `__proto__` stays an ordinary key.
 - No inline `<script>` or `on…=` attributes in extension pages (MV3 content security policy), and no `confirm()` or `alert()` in the side panel.
 - `?fake` on a page means the fake Meet, demo data and an in-memory store, never `chrome.storage`.

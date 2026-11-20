@@ -14,15 +14,14 @@ export function isOwner(roster, name) {
   return roster.ownerNames.some(owner => nameKey(owner) === key);
 }
 
+// Sets a name-keyed entry; defineProperty, so a name like "__proto__" becomes an ordinary key.
+export function setOwn(obj, key, value) {
+  Object.defineProperty(obj, key, { value, enumerable: true, writable: true, configurable: true });
+}
+
 export function addStudent(roster, name) {
   const key = nameKey(name);
-  if (!Object.hasOwn(roster.students, key)) {
-    // defineProperty, so a name like "__proto__" becomes an ordinary key.
-    Object.defineProperty(roster.students, key, {
-      value: { name, track: null, active: false, group: null },
-      enumerable: true, writable: true, configurable: true,
-    });
-  }
+  if (!Object.hasOwn(roster.students, key)) setOwn(roster.students, key, { name, track: null, active: false, group: null });
   return key;
 }
 

@@ -2,7 +2,7 @@
 // `?fake` uses the demo roster and history in an in-memory store.
 
 import { createStore } from '../store.js';
-import { el, button } from '../dom.js';
+import { el, button, $ } from '../dom.js';
 import { DEMO } from '../panel/demo.js';
 import { createGroup, deleteGroup } from '../logic/roster.js';
 import { timeline, historyToCsv, exportBackup, parseBackup } from '../logic/history.js';
@@ -14,8 +14,6 @@ const fake = new URLSearchParams(location.search).has('fake');
 const store = fake
   ? createStore({ memory: true, seed: { roster: DEMO.roster, history: DEMO.history } })
   : createStore();
-
-const $ = id => document.getElementById(id);
 
 let roster;
 let history;

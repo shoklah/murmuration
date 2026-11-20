@@ -3,7 +3,7 @@
 
 import { parseAnswer, resolveStage } from './answers.js';
 import { planRooms, joinTarget, suggestRoom } from './grouping.js';
-import { nameKey, isOwner, addStudent } from './roster.js';
+import { nameKey, isOwner, addStudent, setOwn } from './roster.js';
 import { STAGES } from './stages.js';
 
 export function createSession({ startedAt, meetingCode }) {
@@ -11,18 +11,15 @@ export function createSession({ startedAt, meetingCode }) {
 }
 
 const lastStage = (ctx, key) => (Object.hasOwn(ctx.lastStages, key) ? ctx.lastStages[key] : null);
-const rosterEntry = (ctx, key) => (Object.hasOwn(ctx.roster.students, key) ? ctx.roster.students[key] : null);
+export const rosterEntry = (ctx, key) => (Object.hasOwn(ctx.roster.students, key) ? ctx.roster.students[key] : null);
 
 // The session student for this display name, created on first sight.
 function studentFor(session, ctx, name) {
   const key = nameKey(name);
   if (!Object.hasOwn(session.students, key)) {
-    Object.defineProperty(session.students, key, {
-      value: {
-        name, isNew: !Object.hasOwn(ctx.roster.students, key), stage: null, source: null, fromMessage: null,
-        unclear: null, flag: null, ignored: false, lone: null, alone: null, room: null, afterFill: false,
-      },
-      enumerable: true, writable: true, configurable: true,
+    setOwn(session.students, key, {
+      name, isNew: !Object.hasOwn(ctx.roster.students, key), stage: null, source: null, fromMessage: null,
+      unclear: null, flag: null, ignored: false, lone: null, alone: null, room: null, afterFill: false,
     });
   }
   return [key, session.students[key]];
@@ -85,14 +82,15 @@ export function setMix(session, on) {
 // Non-ignored students, as [key, student] pairs.
 const present = session => Object.entries(session.students).filter(([, s]) => !s.ignored);
 
+// The roster facts grouping uses; working groups count only when not mixed.
+function rosterFacts(session, ctx, key) {
+  const r = rosterEntry(ctx, key);
+  return { track: r?.track ?? null, active: r?.active ?? false, group: session.mixWorkingGroups ? null : r?.group ?? null };
+}
+
 function planEntries(session, ctx) {
-  return present(session).filter(([, s]) => s.stage !== null).map(([key, s]) => {
-    const r = rosterEntry(ctx, key);
-    return {
-      key, stage: s.stage, track: r?.track ?? null, active: r?.active ?? false,
-      group: session.mixWorkingGroups ? null : r?.group ?? null, lone: s.lone,
-    };
-  });
+  return present(session).filter(([, s]) => s.stage !== null)
+    .map(([key, s]) => ({ key, stage: s.stage, ...rosterFacts(session, ctx, key), lone: s.lone }));
 }
 
 export function split(session, ctx) {
@@ -154,8 +152,7 @@ export function summarize(session, ctx) {
   const notInRoom = !session.filled ? [] : students.filter(([, s]) => !s.room).map(([key, s]) => {
     const last = s.stage === null ? lastStage(ctx, key) : null;
     const stageCode = s.stage ?? last;
-    const r = rosterEntry(ctx, key);
-    const entry = { stage: stageCode, track: r?.track ?? null, group: session.mixWorkingGroups ? null : r?.group ?? null };
+    const entry = { stage: stageCode, ...rosterFacts(session, ctx, key) };
     return {
       key, name: s.name, stage: stageCode, guess: last !== null || s.source === 'guess',
       suggested: suggestRoom(entry, rooms, groupOf)?.name ?? null,
