@@ -1,0 +1,26 @@
+body {
+  font: 13px/1.4 system-ui, sans-serif;
+  margin: 0 auto;
+  padding: 12px 16px;
+  max-width: 1000px;
+  overflow-wrap: anywhere;
+}
+
+h1 { font-size: 18px; margin: 0 0 8px; }
+h2 { font-size: 14px; margin: 16px 0 4px; }
+
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 3px 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+
+.lines { list-style: none; padding: 0; margin: 4px 0; }
+.lines li { padding: 3px 0; border-bottom: 1px solid #eee; }
+
+button, select, input, textarea { font: inherit; }
+button[aria-pressed="true"] { font-weight: 600; color: #b45309; }
+textarea { width: 100%; max-width: 400px; }
+
+.timeline span { margin-right: 6px; }
+.guess { font-style: italic; color: #555; }
+.members { color: #555; margin: 0 8px; }
+.hint { color: #555; margin: 0 0 4px; }
+.errors { background: #fee2e2; padding: 6px; border-radius: 4px; }
