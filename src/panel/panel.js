@@ -42,6 +42,7 @@ async function findMeet(meetingCode) {
 async function poll() {
   pollTimer = null;
   const polled = session;
+  if (!polled) return;
   if (!meet) meet = (await findMeet(polled.meetingCode))?.meet ?? null;
   if (session !== polled) return;
   notice = meet ? null : NO_MEET_TAB;
@@ -57,7 +58,10 @@ async function poll() {
 }
 
 async function start() {
+  $('start').disabled = true;
   const found = await findMeet();
+  $('start').disabled = false;
+  if (session) return;
   if (!found) {
     notice = NO_MEET_TAB;
     render();
@@ -66,6 +70,7 @@ async function start() {
   meet = found.meet;
   notice = null;
   session = createSession({ startedAt: new Date().toISOString(), meetingCode: found.meetingCode });
+  render();
   await store.save({ current: session });
   poll();
 }
