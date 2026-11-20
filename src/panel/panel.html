@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Murmuration</title>
+  <link rel="stylesheet" href="panel.css">
+  <script type="module" src="panel.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Murmuration</h1>
+    <span id="answers"></span>
+  </header>
+
+  <p id="owner-warning" class="warning" hidden>Your own Meet names aren't set, so your messages count as a student's. Set them on the roster page.</p>
+  <p id="notice" class="warning" hidden></p>
+  <ul id="errors" class="errors" hidden></ul>
+
+  <button id="start" type="button" hidden>Start</button>
+
+  <main id="session" hidden>
+    <ul id="stages" class="lines"></ul>
+    <ul id="split-groups" class="lines flags"></ul>
+
+    <section id="rooms-section" hidden>
+      <h2>Rooms</h2>
+      <p id="outdated" class="warning" hidden>Changed since Split. Press Re-split before Fill.</p>
+      <ul id="rooms" class="lines"></ul>
+      <div id="fill-result" hidden></div>
+      <p class="actions">
+        <span id="filled-note" hidden>Change rooms in Meet directly.</span>
+        <button id="resplit" type="button">Re-split</button>
+        <button id="fill" type="button">Fill breakout rooms</button>
+      </p>
+    </section>
+    <section id="not-in-room-section">
+      <h2>Not in a room yet</h2>
+      <ul id="not-in-room" class="lines"></ul>
+    </section>
+    <section id="flags-section">
+      <h2>Flags</h2>
+      <ul id="flags" class="lines flags"></ul>
+    </section>
+
+    <section id="unclear-section">
+      <h2>Unclear</h2>
+      <ul id="unclear" class="lines"></ul>
+    </section>
+    <section id="no-answer-section">
+      <h2>No answer <span id="no-answer-count"></span></h2>
+      <ul id="no-answer" class="lines"></ul>
+    </section>
+    <section id="ignored-section">
+      <h2>Ignored</h2>
+      <ul id="ignored" class="lines"></ul>
+    </section>
+
+    <label><input id="mix" type="checkbox"> Mix working groups this time</label>
+
+    <p class="actions"><button id="split" type="button">Split</button><button id="end" type="button">End</button></p>
+  </main>
+
+  <p><a id="roster-link" href="#" target="_blank">Roster</a></p>
+
+  <section id="fake" class="fake" hidden>
+    <h2>Fake Meet</h2>
+    <form id="fake-say">
+      <input id="fake-line" placeholder="Name: message" autocomplete="off">
+      <button type="submit">Send</button>
+    </form>
+    <p><button id="fake-play" type="button">Play demo answers</button></p>
+    <form id="fake-join">
+      <input id="fake-name" placeholder="Name" autocomplete="off">
+      <button type="submit">Join</button>
+    </form>
+    <pre id="fake-rooms" hidden></pre>
+  </section>
+</body>
+</html>
