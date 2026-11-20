@@ -1,13 +1,14 @@
-// The side panel: starts a session, polls Meet into it and shows the live tally.
+// The side panel: starts a session, polls Meet into it, shows the live tally,
+// splits it into rooms and fills Meet's breakout rooms.
 // `?fake` runs on the fake Meet, demo data and an in-memory store.
 
 import { createStore } from '../store.js';
 import { createMeetClient, findMeetTab } from './meet-client.js';
 import { DEMO } from './demo.js';
 import { createFakeMeet } from '../meet/fake-meet.js';
-import { syncFromMeet } from '../logic/flow.js';
+import { syncFromMeet, fillRooms } from '../logic/flow.js';
 import { lastKnownStages } from '../logic/history.js';
-import { createSession, setStage, setIgnored, setLone, setMix, summarize, endSession } from '../logic/session.js';
+import { createSession, setStage, setIgnored, setLone, setMix, split, markPlaced, summarize, endSession } from '../logic/session.js';
 import { STAGES, stage } from '../logic/stages.js';
 
 const POLL_MS = 2000;
@@ -31,6 +32,10 @@ let notice = null;
 let pollTimer = null;
 let endTimer = null;
 let rendered = null;
+let polling = false;
+let filling = false;
+let ownerCreatesRooms = false;
+let fillResult = null;
 
 // The Meet to talk to and its meeting code, or null when no Meet tab is found.
 async function findMeet(meetingCode) {
@@ -42,19 +47,50 @@ async function findMeet(meetingCode) {
 async function poll() {
   pollTimer = null;
   const polled = session;
-  if (!polled) return;
-  if (!meet) meet = (await findMeet(polled.meetingCode))?.meet ?? null;
-  if (session !== polled) return;
-  notice = meet ? null : NO_MEET_TAB;
-  if (meet) {
-    const before = JSON.stringify(ctx.roster);
-    const failures = await syncFromMeet(meet, session, ctx);
+  if (!polled || filling) return;
+  polling = true;
+  try {
+    if (!meet) meet = (await findMeet(polled.meetingCode))?.meet ?? null;
     if (session !== polled) return;
-    errors = failures;
-    await store.save(JSON.stringify(ctx.roster) === before ? { current: session } : { current: session, roster: ctx.roster });
+    notice = meet ? null : NO_MEET_TAB;
+    if (meet) {
+      const before = JSON.stringify(ctx.roster);
+      const failures = await syncFromMeet(meet, session, ctx);
+      if (session !== polled) return;
+      errors = failures;
+      await store.save(JSON.stringify(ctx.roster) === before ? { current: session } : { current: session, roster: ctx.roster });
+    }
+  } finally {
+    polling = false;
   }
   render();
-  if (session === polled) pollTimer = setTimeout(poll, POLL_MS);
+  if (session === polled && !filling) pollTimer = setTimeout(poll, POLL_MS);
+}
+
+// Fills Meet's breakout rooms from the plan, with polling paused meanwhile.
+async function fillBreakout() {
+  const filled = session;
+  filling = true;
+  clearTimeout(pollTimer);
+  pollTimer = null;
+  render();
+  if (!meet) meet = (await findMeet(filled.meetingCode))?.meet ?? null;
+  const result = meet ? await fillRooms(meet, filled, { createRooms: !ownerCreatesRooms }) : null;
+  filling = false;
+  if (session !== filled) return;
+  if (!result) {
+    notice = NO_MEET_TAB;
+  } else if (result.ok) {
+    fillResult = { ok: true, lines: ["Rooms filled. Check Meet's breakout panel, then press Open rooms there."], items: [] };
+  } else if (result.step === 'create') {
+    ownerCreatesRooms = true;
+    fillResult = { ok: false, lines: [result.error, 'Create these rooms in Meet, with these names:'], items: session.plan.map(r => r.name) };
+  } else {
+    fillResult = { ok: false, lines: [result.error, 'Type these names by hand:'], items: result.unfilled.map(u => `${u.name} → ${u.room}`) };
+  }
+  await store.save({ current: session });
+  render();
+  if (!polling && !pollTimer) poll();
 }
 
 async function start() {
@@ -89,6 +125,8 @@ async function end() {
   meet = null;
   errors = [];
   notice = null;
+  ownerCreatesRooms = false;
+  fillResult = null;
   const { history } = await store.load();
   history.push(record);
   ctx.lastStages = lastKnownStages(history);
@@ -148,6 +186,28 @@ function stageLine(line, lone) {
   return li;
 }
 
+// A room member in the preview: marks, and before Fill, a stage select and Ignore.
+function memberRow(key) {
+  const s = session.students[key];
+  const r = rosterEntry(key);
+  const li = el('li', { className: 'member' }, el('span', { className: 'label', textContent: s.name, title: s.fromMessage ?? '' }));
+  if (r) {
+    li.append(button('★', () => act(() => { r.active = !r.active; }), { ariaPressed: String(r.active), title: 'Active student' }));
+    const group = r.group && ctx.roster.groups[r.group]?.name;
+    if (group) li.append(` ◆ ${group}`);
+  }
+  li.append(...newBadge(s.isNew));
+  if (s.source === 'guess') li.append(el('span', { className: 'badge', textContent: '?', title: 'Guessed stage' }));
+  if (!session.filled) li.append(stageSelect(key, s.stage), button('Ignore', () => act(() => setIgnored(session, key, true))));
+  return li;
+}
+
+// Plan members, then students placed there after Fill.
+function roomMembers(room) {
+  const placed = Object.entries(session.students).filter(([, s]) => s.afterFill && s.room === room.name).map(([key]) => key);
+  return [...room.members, ...placed.filter(key => !room.members.includes(key))];
+}
+
 function fill(list, items) {
   list.replaceChildren(...items);
   return items.length > 0;
@@ -155,7 +215,11 @@ function fill(list, items) {
 
 function render() {
   const summary = session && summarize(session, ctx);
-  const state = JSON.stringify({ summary, mix: session?.mixWorkingGroups, errors, notice, ended: !endTimer, owners: ctx.roster.ownerNames.length });
+  const state = JSON.stringify({
+    summary, mix: session?.mixWorkingGroups, errors, notice, ended: !endTimer, owners: ctx.roster.ownerNames.length,
+    plan: session?.plan, outdated: session?.outdated, filled: session?.filled, students: session?.students, roster: ctx.roster.students,
+    filling, ownerCreatesRooms, fillResult, fakeRooms: fakeMeet?.rooms,
+  });
   if (state === rendered) return;
   rendered = state;
 
@@ -166,6 +230,10 @@ function render() {
   $('start').hidden = session !== null;
   $('session').hidden = session === null;
   $('answers').textContent = summary ? `${summary.answers} answer${summary.answers === 1 ? '' : 's'}` : '';
+  if (fake) {
+    $('fake-rooms').hidden = fakeMeet.rooms.length === 0;
+    $('fake-rooms').textContent = fakeMeet.rooms.map(r => `${r.name}: ${r.members.join(', ')}`).join('\n');
+  }
   if (!summary) return;
 
   fill($('stages'), summary.stages.map(line => stageLine(line, summary.lone.find(l => l.stage === line.stage))));
@@ -187,6 +255,35 @@ function render() {
     el('span', { className: 'label', textContent: i.name }),
     button('Restore', () => act(() => setIgnored(session, i.key, false))))));
 
+  $('split').hidden = session.plan !== null;
+  $('rooms-section').hidden = session.plan === null;
+  if (session.plan) {
+    $('outdated').hidden = !session.outdated;
+    fill($('rooms'), session.plan.map(room => el('li', { className: 'room' },
+      el('span', { className: 'label', textContent: room.name }),
+      el('ul', { className: 'lines' }, ...roomMembers(room).map(memberRow)))));
+    $('resplit').disabled = session.filled;
+    $('filled-note').hidden = !session.filled;
+    $('fill').hidden = session.filled;
+    $('fill').disabled = session.outdated || filling;
+    $('fill').textContent = ownerCreatesRooms ? 'Fill names' : 'Fill breakout rooms';
+    $('fill-result').hidden = fillResult === null;
+    $('fill-result').className = `fill-result${fillResult?.ok === false ? ' failed' : ''}`;
+    $('fill-result').replaceChildren(...(fillResult ? [
+      ...fillResult.lines.map(text => el('p', { textContent: text })),
+      ...(fillResult.items.length ? [el('ul', {}, ...fillResult.items.map(text => el('li', { textContent: text })))] : []),
+    ] : []));
+  }
+
+  $('not-in-room-section').hidden = !fill($('not-in-room'), summary.notInRoom.map(n => el('li', {},
+    el('span', { className: 'label', textContent: n.name }),
+    ` ${n.stage ? label(n.stage) : 'no stage'}${n.guess ? ' ?' : ''} → ${n.suggested ?? 'no suggestion'}`,
+    stageSelect(n.key, session.students[n.key].stage),
+    button('Placed', () => act(() => markPlaced(session, n.key, n.suggested)), { disabled: n.suggested === null }))));
+
+  $('flags-section').hidden = !fill($('flags'), summary.flags.map(f => el('li', {},
+    `${f.name} wrote ${f.text} after Fill. Move them in Meet if needed.`, stageSelect(f.key, null))));
+
   $('mix').checked = session.mixWorkingGroups;
   $('end').textContent = endTimer ? 'Press again to end' : 'End';
 }
@@ -206,6 +303,9 @@ async function open() {
 
 $('start').addEventListener('click', start);
 $('end').addEventListener('click', end);
+$('split').addEventListener('click', () => act(() => split(session, ctx)));
+$('resplit').addEventListener('click', () => act(() => split(session, ctx)));
+$('fill').addEventListener('click', fillBreakout);
 $('mix').addEventListener('change', () => act(() => setMix(session, $('mix').checked)));
 
 $('roster-link').href = fake ? `../roster-page/roster-page.html?fake` : '#';

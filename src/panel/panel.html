@@ -22,6 +22,26 @@
     <ul id="stages" class="lines"></ul>
     <ul id="split-groups" class="lines flags"></ul>
 
+    <section id="rooms-section" hidden>
+      <h2>Rooms</h2>
+      <p id="outdated" class="warning" hidden>Changed since Split. Press Re-split before Fill.</p>
+      <ul id="rooms" class="lines"></ul>
+      <div id="fill-result" hidden></div>
+      <p class="actions">
+        <span id="filled-note" hidden>Change rooms in Meet directly.</span>
+        <button id="resplit" type="button">Re-split</button>
+        <button id="fill" type="button">Fill breakout rooms</button>
+      </p>
+    </section>
+    <section id="not-in-room-section">
+      <h2>Not in a room yet</h2>
+      <ul id="not-in-room" class="lines"></ul>
+    </section>
+    <section id="flags-section">
+      <h2>Flags</h2>
+      <ul id="flags" class="lines flags"></ul>
+    </section>
+
     <section id="unclear-section">
       <h2>Unclear</h2>
       <ul id="unclear" class="lines"></ul>
@@ -37,7 +57,7 @@
 
     <label><input id="mix" type="checkbox"> Mix working groups this time</label>
 
-    <p class="actions"><button id="end" type="button">End</button></p>
+    <p class="actions"><button id="split" type="button">Split</button><button id="end" type="button">End</button></p>
   </main>
 
   <p><a id="roster-link" href="#" target="_blank">Roster</a></p>
@@ -53,6 +73,7 @@
       <input id="fake-name" placeholder="Name" autocomplete="off">
       <button type="submit">Join</button>
     </form>
+    <pre id="fake-rooms" hidden></pre>
   </section>
 </body>
 </html>
