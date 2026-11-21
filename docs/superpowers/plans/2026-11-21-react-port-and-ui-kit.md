@@ -274,6 +274,7 @@ One script, using the `playwright` package. Playwright's documented way to load 
 - Check 1, `background registers`: within 10 seconds a service worker is registered whose URL ends with `/src/background.js`. The extension's id is that URL's host.
 - Check 2, `pages open`: `chrome-extension://<id>/src/panel/panel.html` shows a button named `Start`, and `chrome-extension://<id>/src/roster-page/roster-page.html` shows the heading `Roster`. Neither page logs a console error or throws an uncaught error.
 - Check 3, `Start without a Meet tab`: on the panel, pressing `Start` shows the text `Open the Meet call in this window, then press Start.`
+- Check 4, `no request leaves the extension`: across the whole run, no page requested a URL that does not start with `chrome-extension://`. The spec lists the first three checks; the owner added this one when approving the plan, for the spec's anti-goal "The built extension makes a network request".
 
 Find the elements by role and text, not by id, so the script passes on today's plain pages and on the React ones. Print `ok  <check name>` for each check and exit 0; on the first failure print `FAILED  <check name>: <what was seen>` and exit 1.
 
@@ -300,7 +301,7 @@ Add under `## Code conventions`:
 npm run build && npm run check:extension; npm test
 ```
 
-Expected: three `ok` lines and exit 0; 101 tests pass.
+Expected: four `ok` lines and exit 0; 101 tests pass.
 
 - [ ] **Step 6: Commit**
 
@@ -1373,7 +1374,7 @@ node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-catalog.mjs --b
 node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-tokens.mjs --base "$(git merge-base HEAD main)" --theme src/index.css --generated src/components/ui
 ```
 
-Expected: the first line passes, with 127 tests and three `ok` lines; `cmp` prints nothing; the first `git diff` prints nothing; the second shows one added line, `"key"`; `grep` prints nothing; `ls` finds none of the five files; both kit checks exit 0.
+Expected: the first line passes, with 127 tests and four `ok` lines; `cmp` prints nothing; the first `git diff` prints nothing; the second shows one added line, `"key"`; `grep` prints nothing; `ls` finds none of the five files; both kit checks exit 0.
 
 - [ ] **Step 4: Commit**
 
