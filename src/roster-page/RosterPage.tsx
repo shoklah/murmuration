@@ -254,7 +254,7 @@ function BackupSection({ data, onImport }: { data: Data; onImport: (data: Data) 
         >
           Export CSV
         </Button>
-        <Label>
+        <Label className="min-w-0">
           Import backup
           <Input
             type="file"
