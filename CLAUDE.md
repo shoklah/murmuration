@@ -46,6 +46,8 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Roster, history and the current session are plain JSON objects, changed in place by logic functions and saved whole through `src/store.js` under `chrome.storage.local` keys `roster`, `history`, `current`.
 - Pages may set a roster student's `track`, `active` or `group`, a group's `name` and `ownerNames` directly; adding students or groups goes through `src/logic/roster.js`.
 - DOM helpers shared by the extension pages (`el`, `button`, `$`) live in `src/dom.js`.
+- Hand-written components import `cn` from `@/lib/utils`; only the generated `src/components/ui/*` import it from `"cn"`.
+- Every component `.tsx` has a `<name>.stories.tsx` beside it in Storybook's object form (`satisfies Meta<typeof X>`), with callbacks from `fn()` of `storybook/test` and no `play` assertions.
 - Meet operations resolve to `{ ok: true, ... }` or `{ ok: false, op, error }` and never throw; `error` is a sentence the owner can act on.
 - Each Meet op in `src/meet/meet.js` stops within `OP_MS`, below `TIMEOUT_MS` in `src/panel/meet-client.js`; change them together.
 - Chat text and display names are untrusted: put them in the page as React text children, never `dangerouslySetInnerHTML`.
