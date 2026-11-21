@@ -1,7 +1,7 @@
 # Murmuration: move the pages to React and adopt the UI kit
 
 Date: 2026-11-21
-Status: draft for the owner's approval
+Status: approved by the owner on 2026-11-21
 
 ## Why
 
