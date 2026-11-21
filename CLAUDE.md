@@ -19,6 +19,20 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
   Playwright's Chromium. It does not cover a live Meet call.
 - Load in Chrome: `chrome://extensions` → Developer mode → Load unpacked → the
   `dist/` folder.
+- Component catalog: `npm run storybook` (port 6006); `npm run build-storybook` builds it.
+
+## Kits
+
+- ui [react-tailwind-shadcn]
+  - serve: npm run dev -- --port {port} --strictPort
+  - base-url: http://localhost:{port}
+  - checks-from: .
+  - look: direction
+  - adopted: no
+  - screens: /src/panel/panel.html?fake, /src/panel/panel.html?fake&at=collecting, /src/panel/panel.html?fake&at=split, /src/panel/panel.html?fake&at=filled, /src/roster-page/roster-page.html?fake
+  - theme: src/index.css
+  - generated: src/components/ui
+  - catalog-skip: main.tsx
 
 ## Code conventions
 
