@@ -54,3 +54,4 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - No inline `<script>` or `on…=` attributes in extension pages (MV3 content security policy), and no `confirm()` or `alert()` in the side panel.
 - `?fake` on a page means the fake Meet, demo data and an in-memory store, never `chrome.storage`.
 - The `key` line in `manifest.json` pins the extension's id; it is never removed or changed.
+- The panel's behaviour lives in `src/panel/controller.js`; components read its view and call its functions, and keep no session state.
