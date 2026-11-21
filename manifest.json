@@ -3,6 +3,7 @@
   "name": "Murmuration",
   "description": "Breakout rooms by stage for Google Meet mentoring calls.",
   "version": "0.1.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2gCEyetgnBee1Lx/c45CuJFx0gNOLV7VbWKeKILWgkACnbMI910u1jcabd70JX47UxD8GHuB/VtluuknLnpDUxQY2zgAS3NdmRVL1MytGHg8OWoWMK7Hm4REIx2Rh2jFQJkjKM7RabXoBI47dUUCejvnQOADwrHQR8142krK+Fw3BxInK+YuZffQ8a9M4opSS6kAlDxKlX6QcPGcUDnxfhQ7HX6NBT+dbMnNcSnMs+RBIyN2jYVHtHnF4FVARx/ClmS9QE4LPV3+mgdTHgK+I2u/qWXdD762iidRDUTmmddxGgucIvHjoge3eZ1nBKgjGtDXqiny2CorbhSoO+fcjwIDAQAB",
   "permissions": ["storage", "sidePanel"],
   "host_permissions": ["https://meet.google.com/*"],
   "background": { "service_worker": "src/background.js" },

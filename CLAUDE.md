@@ -15,6 +15,8 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
   `http://localhost:8765/src/panel/panel.html?fake` (also the `panel` entry in
   `.claude/launch.json`).
 - Build: `npm run build` writes `dist/`; `npm run watch` rebuilds it on each save.
+- Check the built extension: `npm run check:extension`, after a build. It loads `dist/` in
+  Playwright's Chromium. It does not cover a live Meet call.
 - Load in Chrome: `chrome://extensions` → Developer mode → Load unpacked → the
   `dist/` folder.
 
@@ -37,3 +39,4 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Write name-keyed entries with `setOwn(obj, key, value)` from `src/logic/roster.js` (an enumerable, writable, configurable `Object.defineProperty`), never `obj[key] =`, so a name like `__proto__` stays an ordinary key.
 - No inline `<script>` or `on…=` attributes in extension pages (MV3 content security policy), and no `confirm()` or `alert()` in the side panel.
 - `?fake` on a page means the fake Meet, demo data and an in-memory store, never `chrome.storage`.
+- The `key` line in `manifest.json` pins the extension's id; it is never removed or changed.
