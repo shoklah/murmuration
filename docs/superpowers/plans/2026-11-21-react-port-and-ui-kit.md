@@ -29,11 +29,12 @@
 
 ## Review Focus
 
-1. **End pressed while a poll or Fill is still waiting on Meet.** The ended session must not be saved back or shown again. Pinned in Task 4: "End while a poll is waiting on Meet: the ended session does not come back".
+1. **End pressed while a poll or Fill is still waiting on Meet.** The ended session must not be saved back or shown again. Pinned in Task 4: "End while a poll is waiting on Meet: the ended session does not come back" and "End while Fill is waiting on Meet: the ended session does not come back".
 2. **The Meet tab closed, reloaded or rejoined mid-session.** The panel looks the call's tab up again by meeting code, says "Open the Meet call in this window, then press Start." while there is none, and keeps the session. Pinned in Task 4: "a Meet tab that stops answering is looked up again by meeting code" and "Fill with no Meet tab shows the notice and fills nothing".
 3. **The roster edited on the roster page while the panel is open** (the owner's names, a working group, ★). The panel shows it without a restart. Pinned in Task 4: "a roster saved from the roster page shows without a poll".
 4. **Display names and chat text that are hostile or awkward:** `__proto__`, HTML such as `<b>Bold</b>`, a 300-character word. They show as text, as ordinary students, with no sideways scroll. Pinned in Task 4: "a participant named __proto__ is an ordinary student". The demo's `<b>Bold</b>` student and Sam's 318-character message are on the `?fake&at=collecting` screen, which Task 7's screens check captures at 375 px and fails on sideways scroll.
 5. **Start pressed twice quickly.** One session, one Meet lookup. Pinned in Task 4: "Start pressed twice starts one session".
+6. **Fill pressed while a poll is still waiting on Meet.** The poll finishes before any room is filled, and one poll, not two, runs every 2 seconds afterwards. Pinned in Task 4: "Fill pressed while a poll is waiting on Meet: the poll finishes first, and one poll follows the Fill".
 
 ---
 
@@ -80,14 +81,17 @@ Tasks 1 to 6 leave the old plain pages working: Vite builds and serves them as t
 - **Failing-test check.** Tasks 4 and 5 only, with `-- node --test test/controller.test.js` and `-- node --test test/fake-states.test.js`. Every other task carries an exemption in its header.
 - **The shadcn CLI.** Task 3's Step 1 is yours, before you dispatch that task's implementer. The owner approved this for the ten components above, as a one-time exception to the kit's rule; the run does not pause for it. No subagent runs the CLI.
 - **Wave A** is Tasks 7 and 8. They share no file. Neither edits `CLAUDE.md`, `src/index.css`, `package.json` or anything under `src/components/`.
-- **The hand check.** After Wave A is merged and its checks pass, with the dev server you started for the kit's checks: open `/src/panel/panel.html?fake` in the browser and check that Start, Play demo answers, Split, Fill and End behave as in version 1, and that a stage dropdown left open stays open when a fake answer is sent from the Fake Meet box. Write the result in the ledger.
+- **The hand check.** After Wave A is merged and its checks pass, with the dev server you started for the kit's checks, in the browser. Write the result in the ledger.
+  - **The panel,** `/src/panel/panel.html?fake`: Start, Play demo answers, Split, Fill and End behave as in version 1.
+  - **An open dropdown stays open.** An open Radix `Select` closes on a press outside it, so the answer is sent first. After Start and Play demo answers, send `Mia: S02 SE` from the Fake Meet box and open another student's stage dropdown, both in one batch of browser actions, inside the 2 seconds before the next poll. Read the page at once: the dropdown is open and the tally still says 9 answers. Read it again 3 seconds later: it says 10 answers and the dropdown is still open. If the first read already says 10, do it again with another student.
+  - **The roster page,** `/src/roster-page/roster-page.html?fake`, which the spec's hand check does not list: change a track, press a ★, add a working group, put a student in it, delete it (the confirm question shows), change Your Meet names and leave the field, then Export backup and Import backup with that same file (the confirm question shows, then the same roster). If the browser cannot pick a file, do the export and the import with a throwaway Playwright script that is not committed.
 - **At the finish,** give the owner the spec's "Switching over" steps as they are written: they are the owner's, after the merge. The local tag `v1` is never pushed.
 
 ## The UI kit in this run
 
-- **Kit tasks:** 7 and 8, marked `**Kit:** ui [react-tailwind-shadcn]` with their `**Screens:**`. Line for the owner: `Kits: ui [react-tailwind-shadcn] on tasks 7 and 8`.
-- **From when the checks apply:** from Task 7. The kit's prerequisites are complete after Task 3 (the serve command and Playwright with axe from Task 1, the catalog and the `## Kits` lines from Task 3), and the screens the checks capture exist once Tasks 7 and 8 are merged. Tasks 3 and 6 add catalog entries without changing a screen, so they are not kit tasks; each runs the catalog check as a plain verification step, and Task 9 runs the token and catalog checks over the whole branch.
-- **Briefs** of Tasks 7 and 8 name, as files to read in full first, the kit's `guidance.md` and the stack's `stack.md` (the paths `kit.py show ui --stack react-tailwind-shadcn` prints). No task builds motion, so no task carries the `motion` tag.
+- **Kit tasks:** 7 and 8, marked `**Kit:** ui [react-tailwind-shadcn]` with their `**Screens:**`. Task 6 carries `**Kit:** exempt:`: it writes controls a person uses, but no screen shows them until Tasks 7 and 8, whose checks and review cover them. Line for the owner: `Kits: ui [react-tailwind-shadcn] on tasks 7 and 8; task 6 exempt`.
+- **From when the checks apply:** from Task 7. The kit's prerequisites are complete after Task 3 (the serve command and Playwright with axe from Task 1, the catalog and the `## Kits` lines from Task 3), and the screens the checks capture exist once Tasks 7 and 8 are merged. Tasks 3 and 6 add catalog entries without changing a screen, so neither gets the kit's checks or its reviewer; each runs the catalog check as a plain verification step, and Task 9 runs the token and catalog checks over the whole branch.
+- **Briefs** of Tasks 6, 7 and 8 name, as files to read in full first, the kit's `guidance.md` and the stack's `stack.md` (the paths `kit.py show ui --stack react-tailwind-shadcn` prints). No task builds motion, so no task carries the `motion` tag.
 - **Adoption is pending:** the project carries `look: direction` with `adopted: no`. There is no `DESIGN.md` yet, so tasks follow the kit's floor, and the kit reviewer says at the top of its report that the look is judged against the floor only.
 - **No mockups:** no section's layout changes. The kit reviewer judges against the spec's "The kit's points, per screen" and the task brief.
 - **How a kit finding is ruled in this step.** Every `kit-reviewer` brief carries, word for word, the two rules under "How a kit finding is ruled in this step" in the spec: which findings go into a fix round, and which go on the look step's list with no fix round. That list is given to the owner at the finish.
@@ -148,9 +152,12 @@ npx playwright install chromium
     "types": ["vite/client", "chrome"],
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src", ".storybook"]
+  "include": ["src", ".storybook/*.ts"],
+  "exclude": ["src/meet/meet.js", "src/background.js"]
 }
 ```
+
+`include` names `.storybook/*.ts` because TypeScript skips a bare `.storybook` entry, and Task 3's two files would then never be checked. The two excluded files are classic scripts: left in, their top-level names (`nameKey`, `waitFor`, `ops`) count as globals, and a `.tsx` that calls `nameKey` with no import passes the type check and throws in the page.
 
 - [ ] **Step 5: Write `src/index.css`** with one line: `@import "tailwindcss";`. Task 3's `shadcn init` adds the theme to it.
 
@@ -223,11 +230,11 @@ Expected: the first build fails with `manifest.json names src/panel/missing.html
 Watch mode and the dev server:
 
 ```bash
-npm run watch & sleep 8; rm dist/manifest.json; touch manifest.json; sleep 5; ls dist/manifest.json; kill %1
-npm run dev -- --port 8765 --strictPort & sleep 4; curl -sf 'http://localhost:8765/src/panel/panel.html?fake' | grep -c '<title>Murmuration</title>'; kill %1
+node_modules/.bin/vite build --watch & WATCH=$!; sleep 8; rm dist/manifest.json; touch manifest.json; sleep 5; ls dist/manifest.json; kill $WATCH
+node_modules/.bin/vite --port 8799 --strictPort & DEV=$!; sleep 4; curl -sf 'http://localhost:8799/src/panel/panel.html?fake' | grep -c '<title>Murmuration</title>'; kill $DEV
 ```
 
-Expected: `dist/manifest.json` is listed again; `grep` prints `1`.
+Expected: `dist/manifest.json` is listed again; `grep` prints `1`. Both lines run Vite itself, which is what `npm run watch` and `npm run dev` run, so `kill` stops the process that holds the port. The port is 8799 because 8765 is the owner's own preview.
 
 - [ ] **Step 10: Commit**
 
@@ -322,12 +329,15 @@ git commit -m "build: pin the extension id and smoke-check the built extension"
 
 ```bash
 npx shadcn@latest init --help
-npx shadcn@latest init        # with the flags that answer its questions: base colour neutral, CSS variables on, the CLI's default style
+npx shadcn@latest init --base radix     # plus what --help shows it needs to ask nothing
 npx shadcn@latest add button select badge checkbox label input textarea table alert toggle
 ```
 
-Then check, and fix by hand only what the second and third lines say:
+`init` must end on three things: the Radix library, base colour neutral, CSS variables on. Tasks 6 and 8 rely on how Radix behaves. On CLI 4.23.0, `-b, --base` picks the component library (`base`, `radix` or `aria`) and the CLI's own default is Base UI; CSS variables are on by default; there is no base-colour flag, so the colour comes from the preset or a question and is checked below. Never pass `--defaults`: it means the Next template and a Base UI preset. If `--help` shows other flags, use the ones that give the same three results.
+
+Then check. Fix by hand only what the third and fourth lines say; anything else wrong means `init` is run again:
 - `components.json` has `"rsc": false`, `"tsx": true`, `"tailwind.css": "src/index.css"`, `"tailwind.baseColor": "neutral"`, `"tailwind.cssVariables": true`, and the aliases `@/components`, `@/components/ui`, `@/lib/utils`.
+- `package.json` depends on Radix (`radix-ui`, or `@radix-ui/…` packages) and on no Base UI or React Aria package (`@base-ui/…`, `@base-ui-components/…`, `react-aria-components`).
 - `src/components/ui/` holds exactly the ten `.tsx` files above. Remove any other the CLI added.
 - `src/index.css` imports no web font. If `init` added one (an `@fontsource…` import, a font package, a `--font-sans` that names it), remove the import, the package and the name, so the system font applies.
 - `npm run typecheck` and `npm run build` pass.
@@ -355,12 +365,14 @@ const config: StorybookConfig = {
   // Storybook reuses vite.config.js; the extension's copy step has no place in the catalog's build.
   viteFinal: config => ({
     ...config,
-    plugins: config.plugins?.flat(Infinity).filter(plugin => !(plugin && 'name' in plugin && plugin.name === 'extension-files')),
+    plugins: config.plugins?.flat().filter(plugin => !(plugin && 'name' in plugin && plugin.name === 'extension-files')),
   }),
 };
 
 export default config;
 ```
+
+`.flat()`, not `.flat(Infinity)`: the deeper form fails the type check (TS2589), and the copy plugin is a top-level entry of the list.
 
 `.storybook/preview.ts` imports `../src/index.css` and exports an empty `Preview`.
 
@@ -514,12 +526,13 @@ export function createPanelController({ store, findMeet }) {}
 /**
  * The view for a state. Pure. The controller uses it for every view; Panel's stories use it for their fixed views.
  * `ctx` is `{ roster, lastStages }`, and may be null while `loading`.
+ * @param {{ session: object|null, ctx: { roster: object, lastStages: object }|null, loading?: boolean, starting?: boolean, notice?: string|null, errors?: string[], filling?: boolean, endArmed?: boolean, ownerCreatesRooms?: boolean, fillResult?: FillResult|null }} state
  * @returns {PanelView}
  */
 export function panelView({ session, ctx, loading = false, starting = false, notice = null, errors = [], filling = false, endArmed = false, ownerCreatesRooms = false, fillResult = null }) {}
 ```
 
-Tasks 6 to 8 import these types with `import type { PanelView, PanelActions } from './controller.js'`.
+Task 7 imports these types with `import type { PanelView, PanelActions } from './controller.js'`. `panelView` declares its parameter because, without the `@param`, TypeScript reads the types off the defaults (`notice?: null`, `errors?: never[]`, `fillResult?: null`), and a story that passes a notice, an error list or a fill result fails the type check.
 
 - [ ] **Step 1: Write the failing test, `test/controller.test.js`**
 
@@ -725,6 +738,28 @@ test('Fill pauses the poll, fills the rooms, then polls again', async () => {
   assert.deepEqual(h.view().session.summary.notInRoom, []);
 });
 
+test('Fill pressed while a poll is waiting on Meet: the poll finishes first, and one poll follows the Fill', async () => {
+  const h = await started();
+  await h.controller.split();
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const readParticipants = h.meet.readParticipants;
+  h.meet.readParticipants = async () => { await gate; return readParticipants(); };
+  await h.tick(2000);                                                // this poll now waits on Meet
+  const done = h.controller.fill();
+  await settle();
+  assert.equal(h.view().session.filling, true);
+  assert.deepEqual(h.meet.rooms, []);                                // Fill waits for the poll
+  release();
+  await done;
+  await settle();
+  assert.equal(h.view().session.filled, true);
+  assert.deepEqual(h.meet.rooms.map(room => room.members.length), [2, 3]);
+  const reads = h.reads;
+  await h.tick(2000);
+  assert.equal(h.reads, reads + 1);                                  // one poll every 2 seconds, not two
+});
+
 test('Fill: Meet cannot create the rooms, the owner creates them, then only names are filled', async () => {
   const h = await started({ unsupported: ['createRooms'] });
   await h.controller.split();
@@ -802,6 +837,45 @@ test('End while a poll is waiting on Meet: the ended session does not come back'
   assert.deepEqual(h.saves.at(-1), ['current', 'history']);
 });
 
+test('End while Fill is waiting on Meet: the ended session does not come back', async () => {
+  const h = await started();
+  await h.controller.split();
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const createRooms = h.meet.createRooms;
+  h.meet.createRooms = async names => { await gate; return createRooms(names); };
+  const done = h.controller.fill();
+  await settle();                                                    // Fill now waits on Meet
+  await h.controller.end();
+  await h.controller.end();
+  release();
+  await done;
+  await settle();
+  assert.equal(h.view().session, null);
+  assert.equal((await h.store.load()).current, null);
+  assert.deepEqual(h.saves.at(-1), ['current', 'history']);
+  const reads = h.reads;
+  await h.tick(10000);
+  assert.equal(h.reads, reads);                                      // and no poll starts again
+});
+
+test('after End, the next Start begins clean and knows the stages of the ended session', async () => {
+  const h = await started({ unsupported: ['createRooms'], answers: [['Ana', 'S02 SE'], ['Ben', 's2 se']] });
+  await h.controller.setStage('cleo', 'PW');                         // set by hand: Cleo wrote nothing
+  await h.controller.split();
+  await h.controller.fill();
+  assert.equal(h.view().session.ownerCreatesRooms, true);
+  await h.controller.end();
+  await h.controller.end();
+  await h.controller.start();
+  await settle();
+  const session = h.view().session;
+  assert.equal(session.hasPlan, false);
+  assert.equal(session.ownerCreatesRooms, false);
+  assert.equal(session.fillResult, null);
+  assert.equal(session.summary.noAnswer.find(n => n.key === 'cleo').lastStage, 'PW');
+});
+
 test('a roster saved from the roster page shows without a poll', async () => {
   const h = await started({ ownerNames: [] });
   assert.equal(h.view().ownerNamesMissing, true);
@@ -842,7 +916,7 @@ What changes:
 - [ ] **Step 4: Run the tests and see them pass**
 
 Run: `node --test test/controller.test.js`, then `npm test`
-Expected: 17 pass; then 118 pass.
+Expected: 20 pass; then 121 pass.
 
 - [ ] **Step 5: Add the convention to `CLAUDE.md`**
 
@@ -867,24 +941,27 @@ git commit -m "feat: panel controller, the panel's behaviour out of the page"
 - Modify: `CLAUDE.md` (one convention)
 
 **Interfaces:**
-- Consumes: `DEMO` from `src/panel/demo.js`, `createFakeMeet`, `createStore({ memory: true, seed })`, `syncFromMeet`, `fillRooms`, `createSession`, `split`, `lastKnownStages`.
+- Consumes: `DEMO` from `src/panel/demo.js`, `createFakeMeet`, `createStore({ memory: true, seed })`, `syncFromMeet`, `fillRooms`, `createSession`, `split`, `lastKnownStages`; in the test only, `createPanelController` (Task 4).
 - Produces, from `src/panel/fake-states.js`:
 
 ```js
 /**
  * The fake Meet and the in-memory store of a `?fake` page, brought to a state.
+ * Resolves to `{ meet, store }`.
  * @param {string|null} at  null, 'collecting', 'split' or 'filled'; anything else is before Start
- * @returns {Promise<{ meet: object, store: object }>}
  */
 export async function fakeAt(at) {}
 ```
 
+It carries no `@returns`: TypeScript then reads the real fake Meet and store off the code, which Task 7 needs (`meet.rooms`, `meet.say`, `store.load()`). Declared as `object`, they would fail its type check.
+
 - [ ] **Step 1: Write the failing test, `test/fake-states.test.js`**
 
 ```js
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeAt } from '../src/panel/fake-states.js';
+import { createPanelController } from '../src/panel/controller.js';
 import { DEMO } from '../src/panel/demo.js';
 import { summarize } from '../src/logic/session.js';
 import { lastKnownStages } from '../src/logic/history.js';
@@ -935,6 +1012,31 @@ test('the demo data is left as it was', async () => {
   assert.equal(Object.keys(DEMO.roster.students).length, 12);
   assert.equal(Object.hasOwn(DEMO.roster.students, 'noor'), false);
 });
+
+// Lets every pending promise step run; timers are mocked in the test below, so nothing else moves time.
+const settle = () => new Promise(resolve => setImmediate(resolve));
+
+// Lets a poll that is still running finish on the mocked clock before the real one comes back.
+test.afterEach(async () => { await settle(); mock.timers.reset(); });
+
+test('a panel opened on a state shows it at once, and its first poll changes nothing', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  for (const [state, hasPlan, filled] of [['collecting', false, false], ['split', true, false], ['filled', true, true]]) {
+    const { meet, store } = await fakeAt(state);
+    let saves = 0;
+    const controller = createPanelController({
+      store: { ...store, save: async changes => { saves++; await store.save(changes); } },
+      findMeet: async () => ({ meet, meetingCode: 'abc-defg-hij' }),
+    });
+    await controller.open();
+    const shown = controller.getView();
+    assert.equal(shown.session.hasPlan, hasPlan, state);
+    assert.equal(shown.session.filled, filled, state);
+    await settle();                                                  // the first poll
+    assert.equal(controller.getView(), shown, state);                // the same object: nothing to redraw
+    assert.equal(saves, 0, state);
+  }
+});
 ```
 
 - [ ] **Step 2: Run it and see it fail**
@@ -954,7 +1056,7 @@ The store is `createStore({ memory: true, seed: { roster, history: DEMO.history,
 - [ ] **Step 4: Run the tests and see them pass**
 
 Run: `node --test test/fake-states.test.js`, then `npm test`
-Expected: 5 pass; then 123 pass.
+Expected: 6 pass; then 127 pass.
 
 - [ ] **Step 5: Add the convention to `CLAUDE.md`**, after the `?fake` line:
 
@@ -973,10 +1075,12 @@ git commit -m "feat: addressable states for the fake panel"
 
 ### Task 6: The shared components
 
+**Kit:** exempt: no screen shows these components until Tasks 7 and 8, whose kit checks and review cover them
 **Failing-test check:** exempt: components only draw the controller's view; behaviour is tested in controller.js
 
 **Files:**
 - Create: `src/components/StageSelect.tsx`, `src/components/StageSelect.stories.tsx`, `src/components/ActiveToggle.tsx`, `src/components/ActiveToggle.stories.tsx`, `src/components/ClampedText.tsx`, `src/components/ClampedText.stories.tsx`
+- Modify: `CLAUDE.md` (one convention line)
 
 **Interfaces:**
 - Consumes: `Select`, `Toggle` and `cn` from Task 3; `STAGES` from `src/logic/stages.js`.
@@ -984,14 +1088,16 @@ git commit -m "feat: addressable states for the fake panel"
 
 ```tsx
 /** The stage dropdown: its options are STAGES (value = code, text = label), its placeholder is `stage…`. */
-export function StageSelect(props: { value: string | null; onChange: (stageCode: string) => void; label: string; disabled?: boolean }): JSX.Element
+export function StageSelect(props: { value: string | null; onChange: (stageCode: string) => void; label: string; disabled?: boolean })
 
 /** The ★ button, pressed when the student is active. */
-export function ActiveToggle(props: { active: boolean; onToggle: () => void; label: string }): JSX.Element
+export function ActiveToggle(props: { active: boolean; onToggle: () => void; label: string })
 
 /** Text held to two lines, which expands and collapses on click when it does not fit. */
-export function ClampedText(props: { text: string; className?: string }): JSX.Element
+export function ClampedText(props: { text: string; className?: string })
 ```
+
+Components declare no return type, here and in Tasks 7 and 8: with React 19's types `JSX.Element` is not a global name (TS2503).
 
 - [ ] **Step 1: Write `StageSelect`**
 
@@ -1011,7 +1117,17 @@ The shadcn `Toggle`, small, holding the character `★`; `label` is its `aria-la
 
 Stories, each in a `w-80` container: Short (`need help with task 3`), Long (the last message of `DEMO.answers` in `src/panel/demo.js`, 318 characters with one very long word).
 
-- [ ] **Step 4: Verify**
+- [ ] **Step 4: Update the untrusted-text convention in `CLAUDE.md`**
+
+Under `## Code conventions`, replace "Chat text and display names are untrusted: put them in the page with `textContent` or DOM nodes, never `innerHTML`." with:
+
+```markdown
+- Chat text and display names are untrusted: put them in the page as React text children, never `dangerouslySetInnerHTML`.
+```
+
+These are the project's first React components, and Tasks 7 and 8 are reviewed against this line. The two old pages keep to the old wording until those tasks remove them.
+
+- [ ] **Step 5: Verify**
 
 ```bash
 npm run typecheck && npm run build-storybook && npm test
@@ -1019,12 +1135,12 @@ node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-catalog.mjs --b
 node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-tokens.mjs --base "$(git merge-base HEAD main)" --theme src/index.css --generated src/components/ui
 ```
 
-Expected: all pass, with 123 tests; both checks exit 0.
+Expected: all pass, with 127 tests; both checks exit 0.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/components/StageSelect.tsx src/components/StageSelect.stories.tsx src/components/ActiveToggle.tsx src/components/ActiveToggle.stories.tsx src/components/ClampedText.tsx src/components/ClampedText.stories.tsx
+git add src/components/StageSelect.tsx src/components/StageSelect.stories.tsx src/components/ActiveToggle.tsx src/components/ActiveToggle.stories.tsx src/components/ClampedText.tsx src/components/ClampedText.stories.tsx CLAUDE.md
 git commit -m "feat: StageSelect, ActiveToggle and ClampedText"
 ```
 
@@ -1062,7 +1178,7 @@ export function Panel(props: {
   rosterHref: string;
   onOpenRoster?: () => void;   // when given, the Roster link calls it instead of following its href
   fake?: FakeMeetBox;          // when given, the Fake Meet box is drawn at the bottom
-}): JSX.Element
+})
 ```
 
 - [ ] **Step 1: Write `Panel` in `src/panel/Panel.tsx`**
@@ -1099,27 +1215,32 @@ The Fake Meet box keeps today's fields and buttons. Its first form splits the li
 
 - [ ] **Step 4: Write `src/panel/Panel.stories.tsx`**
 
-Each story passes a fixed view, with no controller behind it and `actions` that do nothing. Build the views from the demo data with a `loaders` function: `fakeAt(at)`, then the store's `roster`, `history` and `current`, then `panelView({ session: current, ctx: { roster, lastStages: lastKnownStages(history) } })`; a story then overrides the fields its state needs.
+Each story passes a fixed view, with no controller behind it and `actions` that do nothing. Build the views from the demo data with a `loaders` function: `fakeAt(at)`, then the store's `roster`, `history` and `current`, then `panelView({ session: current, ctx: { roster, lastStages: lastKnownStages(history) }, …the story's flags })`.
+
+A story's state goes in through `panelView`'s own arguments (`loading`, `notice`, `errors`, `filling`, `endArmed`, `ownerCreatesRooms`, `fillResult`), or is made on the session or the roster before the call, with the functions of `src/logic/session.js` and `syncFromMeet`. The returned view is never edited.
 
 | Story | State |
 |---|---|
 | Loading | `loading: true` |
 | BeforeStart | no session |
 | NoMeetTab | no session, with the notice |
-| OwnerNamesMissing | no session, `ownerNamesMissing: true` |
+| OwnerNamesMissing | no session, the roster's `ownerNames` emptied before the call |
 | NoAnswersYet | a session just made with `createSession`, nobody in it |
 | Collecting | `at: 'collecting'`, with one student ignored through `setIgnored` so Ignored shows |
 | MeetReadFailed | Collecting, with `errors: ['Reading the participant list failed: Not supported.']` |
 | Split | `at: 'split'` |
-| ChangedSinceSplit | Split, with `outdated: true` |
+| ChangedSinceSplit | Split, then one `setStage` on the session, so the plan is outdated |
 | Filling | Split, with `filling: true` |
-| Filled | `at: 'filled'`, with the successful `fillResult`, and Ana writing `S02 SE` after Fill so Flags shows |
+| Filled | `at: 'filled'`, with the successful `fillResult`, and Ana writing `S02 SE` after Fill (`meet.say`, then `syncFromMeet`) so Flags shows |
 | FillRoomsNotCreated | Split, with `ownerCreatesRooms: true` and the failed `fillResult` that lists the rooms to create |
 | FillNamesByHand | `at: 'filled'`, with the failed `fillResult` that lists the names to type |
 | EndArmed | Collecting, with `endArmed: true` |
 | WithFakeMeet | `at: 'filled'`, with the `fake` prop and its rooms |
 
-The `fillResult` values are the ones `test/controller.test.js` asserts.
+The `fillResult` values carry the lines `test/controller.test.js` asserts, with the demo plan's rooms (`S01 Arc01 · A`, `S02 DS · A`, `S03 SE · A`), so each story lists the rooms its own preview shows:
+- successful: `{ ok: true, lines: ["Rooms filled. Check Meet's breakout panel, then press Open rooms there."], items: [] }`;
+- rooms not created: `{ ok: false, lines: ['Not supported.', 'Create these rooms in Meet, with these names:'], items: [the three room names] }`;
+- names by hand: `{ ok: false, lines: ['Putting Ana in S01 Arc01 · A failed: Not supported.', 'Type these names by hand:'], items: […] }`, with one `<name> → <room>` item per member of the session's `plan`, in its order (`Ana → S01 Arc01 · A` first, `Leo → S03 SE · A` last).
 
 - [ ] **Step 5: Verify**
 
@@ -1128,7 +1249,7 @@ npm run typecheck && npm test && npm run build && npm run build-storybook
 grep -rn "dangerouslySetInnerHTML\|innerHTML" src/panel
 ```
 
-Expected: all pass, with 123 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screens after you report.
+Expected: all pass, with 127 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screens after you report.
 
 - [ ] **Step 6: Commit**
 
@@ -1166,7 +1287,7 @@ export type RosterStore = {
   onChange(cb: (changes: { roster?: Roster; history?: SessionRecord[] }) => void): void;
 };
 
-export function RosterPage(props: { store: RosterStore }): JSX.Element
+export function RosterPage(props: { store: RosterStore })
 ```
 
 - [ ] **Step 1: Write `RosterPage` in `src/roster-page/RosterPage.tsx`**
@@ -1183,7 +1304,7 @@ What differs from version 1, and nothing else:
 - **Dropdowns.** Radix does not allow an option with an empty value, so "–" (no track) and "none" (no working group) use the value `none`, turned back into `null` on change.
 - **Fields save when they lose focus,** as `change` did: a group's name and Your Meet names are not saved on every key.
 - **Names for assistive technology,** which change nothing on screen: `Track for <name>`, `Working group for <name>`, `Active` on the ★, `Name of working group <name>`, `Group name` on the new-group field, and the textarea named by its heading.
-- **Structure and widths.** One `<h1>`, and one `<main>` that holds the whole page and spans its width; version 1's 1000 px cap is dropped, so at 768 and 1440 px the table uses the full width. At 375 px the table scrolls sideways inside a container of the page's own, which has `role="region"`, `aria-label="Students"` and `tabIndex={0}`. Give the table a minimum width inside that container, so the container is what scrolls and not the `Table` component's inner one. Name is the first column. The page itself never scrolls sideways.
+- **Structure and widths.** One `<h1>`, and one `<main>` that holds the whole page and spans its width; version 1's 1000 px cap is dropped, so at 768 and 1440 px the table uses the full width. At 375 px the table scrolls sideways inside a container of the page's own, built as three layers: a `div` with `overflow-x-auto`, `role="region"`, `aria-label="Students"` and `tabIndex={0}`; inside it a `div` that carries the minimum width; inside that the `Table`. The minimum width is never passed to `Table`: its `className` lands on the `<table>` inside the component's own `overflow-x-auto` wrapper, which would then be what scrolls, and not the named region. Name is the first column. The page itself never scrolls sideways.
 - **The timeline** keeps each entry's date as its `title`, and a guessed stage stays italic and muted.
 - Rows are keyed by the student's name key, groups by their id.
 
@@ -1212,7 +1333,7 @@ npm run typecheck && npm test && npm run build && npm run build-storybook
 grep -rn "dangerouslySetInnerHTML\|innerHTML" src/roster-page
 ```
 
-Expected: all pass, with 123 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screen after you report.
+Expected: all pass, with 127 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screen after you report.
 
 - [ ] **Step 6: Commit**
 
@@ -1229,18 +1350,13 @@ git commit -m "feat: the roster page in React"
 
 **Files:**
 - Delete: `src/dom.js`
-- Modify: `CLAUDE.md` (two convention lines)
+- Modify: `CLAUDE.md` (one convention line)
 
 - [ ] **Step 1: Delete `src/dom.js`** after checking nothing imports it: `grep -rn "dom.js" src test` prints nothing.
 
 - [ ] **Step 2: Update `CLAUDE.md`'s `## Code conventions`**
 
-- Remove the line "DOM helpers shared by the extension pages (`el`, `button`, `$`) live in `src/dom.js`."
-- Replace "Chat text and display names are untrusted: put them in the page with `textContent` or DOM nodes, never `innerHTML`." with:
-
-```markdown
-- Chat text and display names are untrusted: put them in the page as React text children, never `dangerouslySetInnerHTML`.
-```
+Remove the line "DOM helpers shared by the extension pages (`el`, `button`, `$`) live in `src/dom.js`." The untrusted-text line was replaced in Task 6.
 
 Then read `CLAUDE.md` against the spec's section "`CLAUDE.md` after the port" and fix any line that does not match it.
 
@@ -1257,7 +1373,7 @@ node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-catalog.mjs --b
 node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-tokens.mjs --base "$(git merge-base HEAD main)" --theme src/index.css --generated src/components/ui
 ```
 
-Expected: the first line passes, with 123 tests and three `ok` lines; `cmp` prints nothing; the first `git diff` prints nothing; the second shows one added line, `"key"`; `grep` prints nothing; `ls` finds none of the five files; both kit checks exit 0.
+Expected: the first line passes, with 127 tests and three `ok` lines; `cmp` prints nothing; the first `git diff` prints nothing; the second shows one added line, `"key"`; `grep` prints nothing; `ls` finds none of the five files; both kit checks exit 0.
 
 - [ ] **Step 4: Commit**
 
