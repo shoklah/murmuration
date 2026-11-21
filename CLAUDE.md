@@ -58,3 +58,9 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - `?fake&at=<state>` opens the fake panel in that state (`collecting`, `split`, `filled`), built by `src/panel/fake-states.js`.
 - The `key` line in `manifest.json` pins the extension's id; it is never removed or changed.
 - The panel's behaviour lives in `src/panel/controller.js`; components read its view and call its functions, and keep no session state.
+- A page's sections used once are functions inside the page's `.tsx`; a section with nothing in it renders nothing.
+- A page's `main.tsx` creates its controller or store outside React and renders the page inside `<StrictMode>`; the panel subscribes one `draw` to the controller.
+- Panel stories build each fixed view with a `loaders` function from `fakeAt(at)` and `panelView`, changing state only through `src/logic/` functions before the call.
+- A `Select` option meaning "no value" uses the value `none`, mapped to and from `null` at the component.
+- Page text fields that save to the store are uncontrolled (`defaultValue`), save on blur when changed, and are keyed by the saved value.
+- A table that scrolls sideways sits in `div[role=region][aria-label][tabIndex=0].overflow-x-auto` > a `div` with the minimum width > `Table`; the width never goes on `Table`.
