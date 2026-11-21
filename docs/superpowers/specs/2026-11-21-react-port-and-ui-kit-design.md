@@ -187,6 +187,25 @@ its own address. `?fake` keeps working as today and gains an optional `at`:
 The state is in place at first paint, without waiting for the 2-second poll.
 The Fake Meet box stays at the bottom of the panel in every `?fake` state.
 
+The code that brings the fake to a state is plain JavaScript, so Node can test
+it: each `at` value gives the session the table describes.
+
+### Tests *(the owner's choice)*
+
+- **Behaviour is tested where it lives, in plain JavaScript,** with
+  `node --test`: the existing logic tests, the controller's, and the `at`
+  states'.
+- **Components have no test runner.** They only draw, and are checked by
+  `npm run typecheck`, their stories, the kit's screenshots and review, and a
+  hand check in the `?fake` panel.
+- **So a task that only writes components is exempt from the failing-test
+  check.** Its plan header says: `exempt: components only draw the
+  controller's view; behaviour is tested in controller.js`.
+- The alternative, not chosen: Storybook's Vitest addon running each story's
+  assertions in a real browser. It would give component tasks a failing test
+  first, at the cost of Vitest, the addon, a second test command and slower
+  checks.
+
 ### Components
 
 There is no catalog yet, so every component below is new to the project.
@@ -257,10 +276,17 @@ by the student's name key, which is what keeps an open dropdown open.
   has a `.stories.tsx` beside it, the shadcn components included.
 - **No mockups for this step:** no section's layout changes. The kit's reviewer
   judges against the points below and the task briefs.
-- **What the kit's reviewer should not raise here:** the stack's default look,
-  and rows that join several values in one line (the tally line, the rooms
-  preview rows). Both are today's layout kept on purpose, and both are step 2's
-  work. A finding of that kind goes on step 2's list, not into a fix round.
+- **How a kit finding is ruled in this step** *(my call, from the owner's
+  choice to keep the layout)*:
+  - It goes into a fix round when its fix leaves what the owner sees unchanged
+    (for example a plural built from fragments, rebuilt as whole strings), or
+    when it concerns something this port adds (the empty-state lines, the
+    "Filling rooms…" label, the clamp, the roster table's scroll container).
+  - It goes on step 2's list, with no fix round, when its fix would change
+    today's wording, order or layout. That covers the stack's default look,
+    rows that join several values (the tally line, the rooms preview rows),
+    strings such as "no stage" and "no suggestion", and the `?` mark.
+  - Every kit reviewer brief says so.
 
 ### The kit's points, per screen
 
@@ -332,35 +358,50 @@ by the student's name key, which is what keeps an open dropdown open.
   - `?fake&at=<state>` opens the fake panel in that state.
 - The `## Kits` section above.
 
-## The shadcn commands are the owner's to run
+## The shadcn commands *(the owner's choice)*
 
 The kit's rule is that the owner runs the shadcn CLI, because it fetches code.
-The project has to exist before the CLI can run, so the plan has one pause:
-after the first task sets up Vite, TypeScript, Tailwind, Storybook and
-Playwright, the implementing session gives the owner the exact `init` and `add`
-commands for the ten components above, and continues once they have run.
+For this port the owner approved the ten components listed above and lets the
+implementing session run the CLI itself: `init` once, then `add` for exactly
+those ten. The run has no pause for it. Any other component is still the
+owner's to add, as the kit says.
+
+## Where the work happens
+
+The port is built in a worktree of its own. The folder Chrome loads the
+extension from today is not touched by the run, so the current extension keeps
+working until the owner switches over.
 
 ## Switching over *(the owner's steps, after the merge)*
 
-1. In the current extension, open the roster page and press **Export backup**.
-2. Run `npm install` and `npm run build`.
+1. **First, before the folder Chrome loads today changes in any way:** in the
+   current extension, open the roster page and press **Export backup**. Once
+   that folder holds the new source, the old roster page no longer opens. If
+   Chrome loads the extension from an old session's worktree, export before
+   that worktree is cleaned up.
+2. Bring the merged `main` into the main checkout, then run `npm install` and
+   `npm run build` there.
 3. In `chrome://extensions`, remove the old entry, then **Load unpacked** and
-   pick the `dist/` folder.
+   pick the main checkout's `dist/` folder. Its card should show no error.
 4. Open the roster page and **Import backup**.
 5. In a real call, open the panel, press Start and check that answers appear.
    The Meet-facing files did not change, so this is a check that the new page
    is wired to them correctly.
+
+Steps 3 and 5 are the only checks the run cannot make itself. If either fails,
+that is a fix on a new branch.
 
 ## Done when
 
 - `npm test` passes: the existing tests unchanged, plus the controller's.
 - `npm run typecheck`, `npm run build` and `npm run build-storybook` pass.
 - `dist/` holds the manifest, the two copied scripts identical to their
-  sources, the two pages and their assets, and loads in Chrome with no error on
-  its extension card.
-- In the `?fake` panel: Start, Play demo answers, Split, Fill and End behave as
-  in version 1, and a stage dropdown left open stays open when a fake answer is
-  sent.
+  sources, the two pages and their assets. The build fails if a file the
+  manifest names is missing from `dist/`.
+- The built pages, served from `dist/`, open with `?fake` and no console error.
+- In the `?fake` panel, checked by hand in the browser by the implementing
+  session: Start, Play demo answers, Split, Fill and End behave as in version
+  1, and a stage dropdown left open stays open when a fake answer is sent.
 - The kit's checks pass on the five screens, and its catalog check finds a
   stories file beside every component.
 - `CLAUDE.md` reads as described above.
