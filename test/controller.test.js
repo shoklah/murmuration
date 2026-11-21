@@ -354,3 +354,57 @@ test('a participant named __proto__ is an ordinary student', async () => {
     { key: '__proto__', name: '__proto__', stage: null, guessed: false, message: null, isNew: true, onRoster: false, active: false, group: null });
   assert.equal(h.view().session.summary.noAnswer.some(n => n.key === '__proto__'), true);
 });
+
+test('End while Fill is waiting on Meet, then Start: the new session polls, and the old Fill leaves it alone', async () => {
+  const h = await started();
+  await h.controller.split();
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const createRooms = h.meet.createRooms;
+  h.meet.createRooms = async names => { await gate; return createRooms(names); };
+  const done = h.controller.fill();
+  await settle();                                                    // Fill now waits on Meet
+  await h.controller.end();
+  await h.controller.end();
+  const reads = h.reads;
+  await h.controller.start();
+  await settle();
+  assert.equal(h.view().session.filling, false);
+  assert.equal(h.reads, reads + 1);                                  // the new session polls at once
+  release();
+  await done;
+  await settle();
+  const session = h.view().session;
+  assert.equal(session.filling, false);
+  assert.equal(session.filled, false);
+  assert.equal(session.fillResult, null);
+  await h.tick(2000);
+  assert.equal(h.reads, reads + 2);
+  await h.tick(2000);
+  assert.equal(h.reads, reads + 3);                                  // one poll every 2 seconds
+});
+
+test('End and Start while a poll is waiting on Meet: Fill waits for the new session\'s poll', async () => {
+  const h = await started();
+  const gates = [];
+  const readParticipants = h.meet.readParticipants;
+  h.meet.readParticipants = async () => { await new Promise(resolve => gates.push(resolve)); return readParticipants(); };
+  let created = 0;
+  const createRooms = h.meet.createRooms;
+  h.meet.createRooms = async names => { created++; return createRooms(names); };
+  await h.tick(2000);                                                // the old session's poll waits on Meet
+  await h.controller.end();
+  await h.controller.end();
+  await h.controller.start();
+  await settle();                                                    // the new session's poll waits on Meet
+  gates[0]();
+  await settle();                                                    // the old poll gives up
+  await h.controller.split();
+  const done = h.controller.fill();
+  await settle();
+  assert.equal(created, 0);                                          // Fill waits for the new poll
+  gates[1]();
+  await done;
+  assert.equal(created, 1);
+  assert.equal(h.view().session.filled, true);
+});

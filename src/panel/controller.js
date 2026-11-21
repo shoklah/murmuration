@@ -115,7 +115,8 @@ export function createPanelController({ store, findMeet }) {
     const polled = session;
     if (!polled || filling) return;
     let done;
-    pollRun = new Promise(resolve => { done = resolve; });
+    const run = new Promise(resolve => { done = resolve; });
+    pollRun = run;
     try {
       await ensureMeet(polled.meetingCode);
       if (session !== polled) return;
@@ -130,7 +131,7 @@ export function createPanelController({ store, findMeet }) {
         if (Object.keys(changed).length) await store.save(changed);
       }
     } finally {
-      pollRun = null;
+      if (pollRun === run) pollRun = null;
       done();
     }
     publish();
@@ -145,14 +146,12 @@ export function createPanelController({ store, findMeet }) {
     pollTimer = null;
     publish();
     await pollRun;
-    if (session !== filled) {
-      filling = false;
-      return;
-    }
+    // After End, `filling` belongs to the next session: End already cleared it.
+    if (session !== filled) return;
     await ensureMeet(filled.meetingCode);
     const result = meet ? await fillRooms(meet, filled, { createRooms: !ownerCreatesRooms }) : null;
-    filling = false;
     if (session !== filled) return;
+    filling = false;
     if (!result) {
       notice = NO_MEET_TAB;
     } else if (result.ok) {
@@ -205,6 +204,7 @@ export function createPanelController({ store, findMeet }) {
     meet = null;
     errors = [];
     notice = null;
+    filling = false;
     ownerCreatesRooms = false;
     fillResult = null;
     const { history } = await store.load();
