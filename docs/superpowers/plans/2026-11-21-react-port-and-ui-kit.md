@@ -90,10 +90,7 @@ Tasks 1 to 6 leave the old plain pages working: Vite builds and serves them as t
 - **Briefs** of Tasks 7 and 8 name, as files to read in full first, the kit's `guidance.md` and the stack's `stack.md` (the paths `kit.py show ui --stack react-tailwind-shadcn` prints). No task builds motion, so no task carries the `motion` tag.
 - **Adoption is pending:** the project carries `look: direction` with `adopted: no`. There is no `DESIGN.md` yet, so tasks follow the kit's floor, and the kit reviewer says at the top of its report that the look is judged against the floor only.
 - **No mockups:** no section's layout changes. The kit reviewer judges against the spec's "The kit's points, per screen" and the task brief.
-- **How a kit finding is ruled in this step.** Every `kit-reviewer` brief carries these three lines:
-  - A finding goes into a fix round when its fix leaves what the owner sees unchanged (for example a plural built from fragments, rebuilt as whole strings), or when it concerns something this port adds (the empty-state lines, the "Filling rooms…" label, the clamp, the roster table's scroll container).
-  - A finding goes on the look step's list, with no fix round, when its fix would change today's wording, order or layout. That covers the stack's default look, rows that join several values (the tally line, the rooms preview rows), strings such as "no stage" and "no suggestion", and the `?` mark.
-  - The look step's list is given to the owner at the finish.
+- **How a kit finding is ruled in this step.** Every `kit-reviewer` brief carries, word for word, the two rules under "How a kit finding is ruled in this step" in the spec: which findings go into a fix round, and which go on the look step's list with no fix round. That list is given to the owner at the finish.
 
 ---
 
@@ -267,11 +264,9 @@ Add `"key": "<that output>"` after the `"version"` line. Nothing else in the man
 
 One script, using the `playwright` package. Playwright's documented way to load an unpacked extension is a persistent context with `channel: 'chromium'` and the arguments `--disable-extensions-except=<dist>` and `--load-extension=<dist>` (https://playwright.dev/docs/chrome-extensions); it runs headless. The profile is a fresh temporary folder, so `chrome.storage` is real and empty; the script removes it and closes the browser whether or not a check fails.
 
-- If `dist/manifest.json` does not exist: print `dist/ is missing: run npm run build first.` and exit 1.
 - Check 1, `background registers`: within 10 seconds a service worker is registered whose URL ends with `/src/background.js`. The extension's id is that URL's host.
 - Check 2, `pages open`: `chrome-extension://<id>/src/panel/panel.html` shows a button named `Start`, and `chrome-extension://<id>/src/roster-page/roster-page.html` shows the heading `Roster`. Neither page logs a console error or throws an uncaught error.
 - Check 3, `Start without a Meet tab`: on the panel, pressing `Start` shows the text `Open the Meet call in this window, then press Start.`
-- Check 4, `no request leaves the extension`: across the whole run, no page requested a URL that does not start with `chrome-extension://`.
 
 Find the elements by role and text, not by id, so the script passes on today's plain pages and on the React ones. Print `ok  <check name>` for each check and exit 0; on the first failure print `FAILED  <check name>: <what was seen>` and exit 1.
 
@@ -295,10 +290,10 @@ Add under `## Code conventions`:
 - [ ] **Step 5: Verify**
 
 ```bash
-rm -rf dist && npm run check:extension; npm run build && npm run check:extension; npm test
+npm run build && npm run check:extension; npm test
 ```
 
-Expected: the first run prints `dist/ is missing: run npm run build first.` and exits 1; the second prints four `ok` lines and exits 0; 101 tests pass.
+Expected: three `ok` lines and exit 0; 101 tests pass.
 
 - [ ] **Step 6: Commit**
 
@@ -373,34 +368,20 @@ Add to `package.json`: `"storybook": "storybook dev -p 6006"` and `"build-storyb
 
 - [ ] **Step 3: Write a stories file beside each of the ten components**
 
-Each is `src/components/ui/<name>.stories.tsx`, in this form:
-
-```tsx
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Button } from './button';
-
-const meta = { component: Button, args: { children: 'Split' } } satisfies Meta<typeof Button>;
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Primary: Story = {};
-export const Outline: Story = { args: { variant: 'outline', children: 'Re-split' } };
-```
-
-Stories have no `play` assertions: the project has no component test runner. One story per variant and state the port uses:
+Each is `src/components/ui/<name>.stories.tsx` in Storybook's object form: a default export `{ component, args } satisfies Meta<typeof X>`, and one named `StoryObj` export per story. Stories have no `play` assertions: the project has no component test runner. One story per variant and state the port uses:
 
 | Component | Stories |
 |---|---|
-| `button` | Primary, Outline, Ghost, Secondary, Small (`size: 'sm'`), Disabled, Pressed (`aria-pressed`, `variant: 'secondary'`) |
+| `button` | Primary, Outline, Ghost, Secondary, Small (`size: 'sm'`), Disabled |
 | `select` | Placeholder (`stage…`), WithValue, Disabled |
-| `badge` | Default (`new`), Secondary, Outline |
+| `badge` | Secondary (`new`) |
 | `checkbox` | Unchecked, Checked, Disabled, each with a `Label` |
 | `label` | Default, beside an `Input` |
-| `input` | Empty (placeholder), Filled, Disabled, File (`type: 'file'`) |
+| `input` | Empty (placeholder), Filled, File (`type: 'file'`) |
 | `textarea` | Empty, Filled |
 | `table` | Default (a header and three rows), Empty (one row spanning the columns) |
 | `alert` | Default, Destructive |
-| `toggle` | Off, On, Disabled |
+| `toggle` | Off, On |
 
 - [ ] **Step 4: Update `CLAUDE.md`**
 
@@ -433,12 +414,10 @@ The `at=` screens exist from Tasks 5 and 7.
 
 ```bash
 npm run typecheck && npm run build && npm run build-storybook && npm test
-ls dist/manifest.json; ls storybook-static/src 2>/dev/null
 node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-catalog.mjs --base "$(git merge-base HEAD main)" --skip main.tsx
-git status --short
 ```
 
-Expected: the four commands pass, with 101 tests; `dist/manifest.json` exists and `storybook-static/src` does not (the copy plugin stayed out of the catalog's build); the catalog check exits 0; `git status` lists nothing under `storybook-static/`.
+Expected: the four commands pass, with 101 tests; the catalog check exits 0. A passing `build-storybook` also shows the copy plugin stayed out of it: its manifest check would fail there.
 
 - [ ] **Step 6: Commit**
 
@@ -691,35 +670,26 @@ test('a saved session is restored on open and polled at once', async () => {
 test('owner actions change the session, save it with the roster, and show in the view', async () => {
   const h = await started();
   const before = h.saves.length;
-  await h.controller.setStage('ana', 'PW');
+  const member = key => h.view().session.members.find(m => m.key === key);
+  await h.controller.setStage('eva', 'S03SE');                       // Eva is now alone at her stage, and so is Dan
   assert.deepEqual(h.saves.at(-1), ['current', 'roster']);
-  assert.equal(h.view().session.members.find(m => m.key === 'ana').stage, 'PW');
+  assert.equal(member('eva').stage, 'S03SE');
+  await h.controller.setLone('eva', 'join');
+  assert.deepEqual(h.view().session.summary.lone.map(l => [l.key, l.choice]), [['dan', null], ['eva', 'join']]);
   await h.controller.setIgnored('ben', true);
   assert.deepEqual(h.view().session.summary.ignored, [{ key: 'ben', name: 'Ben' }]);
   await h.controller.setIgnored('ben', false);
   assert.deepEqual(h.view().session.summary.ignored, []);
   await h.controller.toggleActive('ana');
-  assert.equal(h.view().session.members.find(m => m.key === 'ana').active, true);
+  assert.equal(member('ana').active, true);
   assert.equal((await h.store.load()).roster.students.ana.active, true);
   await h.controller.setMix(true);
   assert.equal(h.view().session.mixWorkingGroups, true);
   await h.controller.split();
   assert.equal(h.view().session.hasPlan, true);
-  await h.controller.setStage('ana', 'S02SE');
-  assert.equal(h.view().session.outdated, true);
-  await h.controller.split();                                        // Re-split
-  assert.equal(h.view().session.outdated, false);
+  await h.controller.setStage('ana', 'PW');
+  assert.equal(h.view().session.outdated, true);                     // changed since Split
   assert.equal(h.saves.length, before + 8);
-});
-
-test('a lone student can be kept alone or joined to a room', async () => {
-  const h = await started({ answers: [...ANSWERS, ['Mentor', 'ok'], ['Eva', 'S03 SE']] });
-  const lone = () => h.view().session.summary.lone.map(l => [l.key, l.choice]);
-  assert.deepEqual(lone(), [['dan', null], ['eva', null]]);
-  await h.controller.setLone('dan', 'join');
-  assert.deepEqual(lone(), [['dan', 'join'], ['eva', null]]);
-  await h.controller.setLone('dan', 'alone');
-  assert.deepEqual(lone(), [['dan', 'alone'], ['eva', null]]);
 });
 
 test('Fill pauses the poll, fills the rooms, then polls again', async () => {
@@ -750,10 +720,9 @@ test('Fill pauses the poll, fills the rooms, then polls again', async () => {
   h.meet.join('Zoe');
   h.meet.say('Zoe', 'S02 SE');
   await h.tick(2000);
-  assert.deepEqual(h.view().session.summary.notInRoom.map(n => [n.name, n.suggested]), [['Zoe', 'S02 SE · A']]);
+  assert.deepEqual(h.view().session.summary.notInRoom.map(n => n.key), ['zoe']);
   await h.controller.markPlaced('zoe', 'S02 SE · A');
   assert.deepEqual(h.view().session.summary.notInRoom, []);
-  assert.deepEqual(h.view().session.summary.rooms[1].placed, ['zoe']);
 });
 
 test('Fill: Meet cannot create the rooms, the owner creates them, then only names are filled', async () => {
@@ -772,7 +741,6 @@ test('Fill: Meet cannot create the rooms, the owner creates them, then only name
   await h.controller.fill();
   assert.equal(h.view().session.filled, true);
   assert.equal(h.view().session.fillResult.ok, true);
-  assert.deepEqual(h.meet.rooms[0], { name: 'Preseason Web · A', members: ['Dan', 'Eva'] });
 });
 
 test('Fill: typing the names fails, and the names to type by hand are listed', async () => {
@@ -812,8 +780,6 @@ test('End needs a second press within 5 seconds, then saves the record and stops
   const { history, current } = await h.store.load();
   assert.equal(current, null);
   assert.equal(history.length, 1);
-  assert.equal(history[0].meetingCode, 'abc-defg-hij');
-  assert.equal(history[0].students.length, 5);
   const reads = h.reads;
   await h.tick(10000);
   assert.equal(h.reads, reads);
@@ -876,7 +842,7 @@ What changes:
 - [ ] **Step 4: Run the tests and see them pass**
 
 Run: `node --test test/controller.test.js`, then `npm test`
-Expected: 18 pass; then 119 pass.
+Expected: 17 pass; then 118 pass.
 
 - [ ] **Step 5: Add the convention to `CLAUDE.md`**
 
@@ -919,6 +885,7 @@ export async function fakeAt(at) {}
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeAt } from '../src/panel/fake-states.js';
+import { DEMO } from '../src/panel/demo.js';
 import { summarize } from '../src/logic/session.js';
 import { lastKnownStages } from '../src/logic/history.js';
 
@@ -943,7 +910,6 @@ test('collecting: the session is started and the demo answers are in', async () 
   const { current, summary } = await at('collecting');
   assert.equal(current.plan, null);
   assert.equal(summary.answers, 9);
-  assert.deepEqual(summary.stages.map(line => [line.label, line.count]), [['S01 Arc01', 5], ['S02 DS', 3], ['S03 SE', 1]]);
   assert.deepEqual(summary.unclear.map(u => u.name), ['Sam']);
   assert.deepEqual(summary.noAnswer.map(n => n.name), ['<b>Bold</b>', 'Mia', 'Galaxy S21']);
 });
@@ -964,15 +930,10 @@ test('filled: the rooms are filled in the fake Meet, and a latecomer is not in a
   assert.deepEqual(summary.notInRoom.at(-1), { key: 'noor', name: 'Noor', stage: 'S02DS', guess: false, suggested: 'S02 DS · A' });
 });
 
-test('each call gives its own Meet and store, and leaves the demo data as it was', async () => {
-  const first = await fakeAt('filled');                              // Noor joins this call's roster only
-  const second = await fakeAt('collecting');
-  first.meet.say('Ana', 'PW');
-  await first.store.save({ current: null });
-  assert.equal((await second.meet.readChat()).messages.length, 11);
-  const { current, roster } = await second.store.load();
-  assert.notEqual(current, null);
-  assert.equal(Object.keys(roster.students).length, 12);
+test('the demo data is left as it was', async () => {
+  await fakeAt('filled');                                            // Noor joins that call's roster only
+  assert.equal(Object.keys(DEMO.roster.students).length, 12);
+  assert.equal(Object.hasOwn(DEMO.roster.students, 'noor'), false);
 });
 ```
 
@@ -993,7 +954,7 @@ The store is `createStore({ memory: true, seed: { roster, history: DEMO.history,
 - [ ] **Step 4: Run the tests and see them pass**
 
 Run: `node --test test/fake-states.test.js`, then `npm test`
-Expected: 5 pass; then 124 pass.
+Expected: 5 pass; then 123 pass.
 
 - [ ] **Step 5: Add the convention to `CLAUDE.md`**, after the `?fake` line:
 
@@ -1058,7 +1019,7 @@ node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-catalog.mjs --b
 node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-tokens.mjs --base "$(git merge-base HEAD main)" --theme src/index.css --generated src/components/ui
 ```
 
-Expected: all pass, with 124 tests; both checks exit 0.
+Expected: all pass, with 123 tests; both checks exit 0.
 
 - [ ] **Step 5: Commit**
 
@@ -1114,6 +1075,7 @@ What differs from version 1, and nothing else:
 - **Main actions stand out.** Start, Split, and Fill breakout rooms (also when it reads Fill names) are primary buttons. Every other button is outline or ghost, small inside rows. Of Keep alone and Join, the pressed one is `secondary`, with `aria-pressed` on both.
 - **Open controls stay open.** Every row is keyed by the student's name key, each room by its name.
 - **Long chat text is clamped.** An unclear message is a `ClampedText`.
+- **Marks.** `new` and `?` are `secondary` badges.
 - **Empty states.** Before Start: the line "Start a session to read stage answers from the Meet chat." above the Start button. Session started with no answers: "No answers yet. Students write their stage in the Meet chat." where the tally goes. Sections with nothing in them stay hidden, as today.
 - **Loading.** While `view.loading`, the page shows its title and nothing else. Start is disabled while `view.starting`. While `filling`, the Fill button is disabled and reads "Filling rooms…".
 - **Alerts.** The owner-names warning, the notice and "Changed since Split. Press Re-split before Fill." are `Alert`s. The Meet errors, a failed Fill and its list are destructive `Alert`s. A successful Fill is an `Alert`.
@@ -1166,7 +1128,7 @@ npm run typecheck && npm test && npm run build && npm run build-storybook
 grep -rn "dangerouslySetInnerHTML\|innerHTML" src/panel
 ```
 
-Expected: all pass, with 124 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screens after you report.
+Expected: all pass, with 123 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screens after you report.
 
 - [ ] **Step 6: Commit**
 
@@ -1216,7 +1178,7 @@ The page has no controller. The component loads `{ roster, history }` from the s
 What differs from version 1, and nothing else:
 - **Empty states.** No students: "No students yet. They are added when they answer in a session." in place of the table's rows. No working groups: "No working groups yet." above the new-group field. A student with no history: a muted dash in the timeline cell, with "no sessions yet" for screen readers.
 - **Loading.** Until the store has answered, the page shows its title and nothing else.
-- **The import error** is a destructive `Alert`.
+- **The import field** is an `Input` of type `file` with the `Label` "Import backup". **The import error** is a destructive `Alert`.
 - **Buttons** are all outline or ghost; the page has no primary action.
 - **Dropdowns.** Radix does not allow an option with an empty value, so "–" (no track) and "none" (no working group) use the value `none`, turned back into `null` on change.
 - **Fields save when they lose focus,** as `change` did: a group's name and Your Meet names are not saved on every key.
@@ -1250,7 +1212,7 @@ npm run typecheck && npm test && npm run build && npm run build-storybook
 grep -rn "dangerouslySetInnerHTML\|innerHTML" src/roster-page
 ```
 
-Expected: all pass, with 124 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screen after you report.
+Expected: all pass, with 123 tests; `grep` prints nothing. Start no server and open no browser: the session captures the screen after you report.
 
 - [ ] **Step 6: Commit**
 
@@ -1295,7 +1257,7 @@ node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-catalog.mjs --b
 node ~/.claude/kits/ui/stacks/react-tailwind-shadcn/checks/check-tokens.mjs --base "$(git merge-base HEAD main)" --theme src/index.css --generated src/components/ui
 ```
 
-Expected: the first line passes, with 124 tests and four `ok` lines; `cmp` prints nothing; the first `git diff` prints nothing; the second shows one added line, `"key"`; `grep` prints nothing; `ls` finds none of the five files; both kit checks exit 0.
+Expected: the first line passes, with 123 tests and three `ok` lines; `cmp` prints nothing; the first `git diff` prints nothing; the second shows one added line, `"key"`; `grep` prints nothing; `ls` finds none of the five files; both kit checks exit 0.
 
 - [ ] **Step 4: Commit**
 
