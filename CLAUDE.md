@@ -8,16 +8,21 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 
 ## Commands
 
-- Tests: `npm test` (Node's built-in runner, `node --test`; Node 22).
-- Try the panel without Meet: `python3 -m http.server 8765` from the repo root,
-  then open `http://localhost:8765/src/panel/panel.html?fake` (also the
-  `panel` entry in `.claude/launch.json`).
-- Load in Chrome: `chrome://extensions` → Developer mode → Load unpacked → this
-  folder.
+- Install: `npm install` (Node 22).
+- Tests: `npm test` (Node's built-in runner on `test/*.test.js`).
+- Type check: `npm run typecheck`.
+- Try the pages without Meet: `npm run dev -- --port 8765 --strictPort`, then open
+  `http://localhost:8765/src/panel/panel.html?fake` (also the `panel` entry in
+  `.claude/launch.json`).
+- Build: `npm run build` writes `dist/`; `npm run watch` rebuilds it on each save.
+- Load in Chrome: `chrome://extensions` → Developer mode → Load unpacked → the
+  `dist/` folder.
 
 ## Code conventions
 
-- Plain JavaScript ES modules, no build step, no dependencies (no npm packages, dev ones included).
+- The pages are React in `.tsx`, styled with Tailwind and shadcn components and built by Vite into `dist/`; every other file is plain JavaScript.
+- `meet.js`, `background.js` and `manifest.json` are copied into `dist/` unchanged.
+- The built extension makes no network request.
 - Only `src/meet/meet.js` reads or drives Meet's page; it is a classic content script with no imports.
 - `src/logic/` modules use no `chrome.*` API and no DOM; each has `test/<module>.test.js`.
 - The stage list and track paths live only in `src/logic/stages.js`; other code passes stage codes (`S02DS`) and takes labels from there.
