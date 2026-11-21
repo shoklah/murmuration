@@ -57,8 +57,8 @@ step 1 only.
 - Replacing `confirm()` on the roster page (delete a working group, replace
   data on import). It stays.
 - Web fonts. The port uses the system font; step 2 decides.
-- A linter, a formatter, or browser-driven end-to-end tests of the project's
-  own.
+- A linter, a formatter, or a suite of browser-driven end-to-end tests. The one
+  smoke check under "Checking the built extension" is the exception.
 
 ## Anti-goals (it fails even if it works)
 
@@ -76,9 +76,10 @@ step 1 only.
   built pages load only script files from `dist/`.
 - **The manifest keeps its paths.** `src/panel/panel.html`,
   `src/roster-page/roster-page.html`, `src/background.js` and
-  `src/meet/meet.js` exist at those paths inside `dist/`, so `manifest.json`
-  ships unchanged and `chrome.runtime.getURL('src/roster-page/roster-page.html')`
-  still works.
+  `src/meet/meet.js` exist at those paths inside `dist/`, so every path in
+  `manifest.json` stays as it is and
+  `chrome.runtime.getURL('src/roster-page/roster-page.html')` still works. The
+  manifest's only change is the `key` line under "The extension's id".
 - **`meet.js` and `background.js` are classic scripts with no imports.** They
   are copied, not bundled.
 - **The side panel is narrow** in real use (about 360 px, wider if the owner
@@ -89,7 +90,8 @@ step 1 only.
   `chrome.storage`.
 - **Loading from `dist/` gives the extension a new id**, because Chrome derives
   an unpacked extension's id from its folder. Data saved under the old id does
-  not follow. See "Switching over".
+  not follow. See "The extension's id" and "Switching over".
+- **npm** stays the package manager *(the owner's choice)*.
 
 ## Approaches considered
 
@@ -113,8 +115,12 @@ building that screen twice.
 - Everything else stays plain JavaScript: `src/logic/`, the store, the Meet
   files, and the new panel controller below. Tests stay on Node's built-in
   runner (`npm test`).
-- TypeScript reads the JavaScript modules as they are (`allowJs`); they get no
-  type annotations in this change.
+- TypeScript reads the JavaScript modules as they are (`allowJs`). The existing
+  ones get no type annotations in this change.
+- The one exception is the new controller: it declares the shape of its view
+  and of its functions in JSDoc comments, so every component is type-checked
+  against them. Components have no tests, which makes `npm run typecheck` their
+  main automatic check. `.tsx` files are checked in strict mode.
 
 ### Build
 
@@ -131,11 +137,46 @@ building that screen twice.
     call.
   - `npm run typecheck`: `tsc --noEmit`.
   - `npm test`: unchanged, `node --test`.
+  - `npm run check:extension`: the smoke check below, run after a build.
   - `npm run storybook` and `npm run build-storybook`.
 - `.gitignore` gets `node_modules/`, `dist/` and `storybook-static/`. The
   lockfile is committed.
 - `.claude/launch.json`'s `panel` entry runs the dev server on port 8765, so
   the `?fake` address in `CLAUDE.md` stays the same.
+
+### The extension's id *(the owner's choice)*
+
+`manifest.json` gains a `key` line, which fixes the extension's id whatever
+folder Chrome loads it from. Without it the id would change again each time
+the folder moves, and each time a branch's build is loaded from its worktree.
+
+- Every copy of the extension is then the same one to Chrome, with the same
+  saved roster and history. A branch build the owner loads sees the real data
+  and can write to it; Export backup is the safeguard. Only one copy can be
+  loaded at a time.
+- The key is the public half of a key pair made for this purpose. The private
+  half is not needed and is not kept.
+- The move from version 1's folder-based id to the pinned one still happens
+  once. "Switching over" covers it.
+
+### Checking the built extension *(the owner's choice)*
+
+Packaging mistakes (a wrong path in `dist/`, a script the content security
+policy blocks, a background script that does not register) do not show on the
+dev server. `npm run check:extension` is one small script that starts
+Playwright's Chromium with `dist/` loaded as an unpacked extension and checks
+that:
+
+- the background script registers;
+- the panel and the roster page open from their `chrome-extension://`
+  addresses with no console error;
+- on real, empty `chrome.storage`, the panel shows Start, and pressing it with
+  no Meet tab open shows "Open the Meet call in this window, then press
+  Start.".
+
+It exits with an error when a check fails. It is not part of `npm test`,
+because it needs a build and a browser. It does not cover a live Meet call or
+the panel shown as a side panel; those stay the owner's checks.
 
 ### The panel's state moves out of the page
 
@@ -159,6 +200,11 @@ drawing. The port separates them.
 - **Components read the view and call the controller's functions.** They hold
   no session state of their own. Local interface state, such as an expanded
   message, stays in the component.
+- **`Panel` takes the view and the functions as props.** Its stories then pass
+  fixed views, one per state, with no controller behind them.
+- **The controller is created once, in the entry file, outside React.** A
+  component that created it would start a second poll when React mounts it
+  twice in development.
 - **The behaviour does not change.** The controller is `panel.js`'s logic
   moved, with the same timings and the same messages.
 - **Tests:** `test/controller.test.js`, on the in-memory store and the fake
@@ -247,7 +293,9 @@ How today's elements map:
 | Your Meet names | `Textarea` |
 
 Text is always a React child, never `dangerouslySetInnerHTML`. Rows are keyed
-by the student's name key, which is what keeps an open dropdown open.
+by the student's name key, which is what keeps an open dropdown open. A
+dropdown still closes when its own row leaves its section, for example when
+that student answers while the owner is choosing for them. That is expected.
 
 ### The UI kit in this project
 
@@ -354,6 +402,8 @@ by the student's name key, which is what keeps an open dropdown open.
     its view and call its functions, and keep no session state.
   - `meet.js`, `background.js` and `manifest.json` are copied into `dist/`
     unchanged.
+  - The `key` line in `manifest.json` pins the extension's id; it is never
+    removed or changed.
   - The built extension makes no network request.
   - `?fake&at=<state>` opens the fake panel in that state.
 - The `## Kits` section above.
@@ -381,15 +431,24 @@ working until the owner switches over.
    that worktree is cleaned up.
 2. Bring the merged `main` into the main checkout, then run `npm install` and
    `npm run build` there.
-3. In `chrome://extensions`, remove the old entry, then **Load unpacked** and
-   pick the main checkout's `dist/` folder. Its card should show no error.
+3. In `chrome://extensions`, turn the old entry **off**, without removing it:
+   removing it deletes its saved data. Then **Load unpacked** and pick the main
+   checkout's `dist/` folder. Its card should show no error.
 4. Open the roster page and **Import backup**.
 5. In a real call, open the panel, press Start and check that answers appear.
    The Meet-facing files did not change, so this is a check that the new page
    is wired to them correctly.
+6. After the first good real session on the port, remove the old entry.
 
-Steps 3 and 5 are the only checks the run cannot make itself. If either fails,
-that is a fix on a new branch.
+Step 5 is the one check the run cannot make itself. If it fails, that is a fix
+on a new branch.
+
+### Falling back to version 1 *(the owner's choice)*
+
+Version 1 is tagged `v1` (commit `a61b5ab`) and needs no build. To fall back:
+check the tag out into a folder, **Load unpacked** that folder, and **Import
+backup**. The old entry, turned off, keeps a second copy of the data until
+step 6.
 
 ## Done when
 
@@ -398,7 +457,7 @@ that is a fix on a new branch.
 - `dist/` holds the manifest, the two copied scripts identical to their
   sources, the two pages and their assets. The build fails if a file the
   manifest names is missing from `dist/`.
-- The built pages, served from `dist/`, open with `?fake` and no console error.
+- `npm run check:extension` passes on that build.
 - In the `?fake` panel, checked by hand in the browser by the implementing
   session: Start, Play demo answers, Split, Fill and End behave as in version
   1, and a stage dropdown left open stays open when a fake answer is sent.
@@ -412,6 +471,7 @@ that is a fix on a new branch.
 - How the three files are copied into `dist/` (a few lines in the Vite config,
   or a plugin), as long as watch mode copies them too.
 - The view object's exact fields, and the controller's function names.
+- How the key pair for the manifest's `key` is made.
 - How the `at` states are reached in the fake.
 - How the roster page redraws after a change made in place.
 - Whether the entry files call `chrome.*` directly (with `@types/chrome`) or
