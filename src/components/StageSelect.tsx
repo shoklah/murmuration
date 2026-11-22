@@ -30,7 +30,7 @@ export function StageSelect({ value, onChange, label, disabled, compact }: {
           <SelectValue placeholder="stage…" />
         </SelectTrigger>
       )}
-      <SelectContent>
+      <SelectContent position={compact ? 'popper' : 'item-aligned'}>
         {STAGES.map(stage => (
           <SelectItem key={stage.code} value={stage.code}>
             {stage.label}
