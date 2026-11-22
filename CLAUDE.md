@@ -63,4 +63,4 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Panel stories build each fixed view with a `loaders` function from `fakeAt(at)` and `panelView`, changing state only through `src/logic/` functions before the call.
 - A `Select` option meaning "no value" uses the value `none`, mapped to and from `null` at the component.
 - Page text fields that save to the store are uncontrolled (`defaultValue`), save on blur when changed, and are keyed by the saved value.
-- A table that scrolls sideways sits in `div[role=region][aria-label][tabIndex=0].overflow-x-auto` with a visible `rounded-md border` > a `div` with the minimum width > `Table`; the width never goes on `Table`.
+- A table that scrolls sideways sits in `div[role=region][aria-label][tabIndex=0].overflow-x-auto` with a visible `rounded-md border` and a right-edge scroll shadow (a `local` background cover over a `scroll` gradient, theme tokens only) > a `div` with the minimum width > `Table`; the width never goes on `Table`.

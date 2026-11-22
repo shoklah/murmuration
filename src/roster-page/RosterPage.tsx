@@ -100,8 +100,15 @@ function StudentsSection({ roster, history, act }: { roster: Roster; history: Se
   return (
     <section className="space-y-2">
       <h2 className="text-base font-semibold">Students</h2>
-      {/* The named region scrolls, not the Table's own container: the minimum width sits between them. */}
-      <div className="overflow-x-auto rounded-md border" role="region" aria-label="Students" tabIndex={0}>
+      {/* The named region scrolls, not the Table's own container: the minimum width sits between them.
+          Its right edge shows a shadow while more lies to the right: a cover that scrolls with the content
+          (attachment local) hides the fixed shadow once the end is reached or when nothing overflows. */}
+      <div
+        className="overflow-x-auto rounded-md border bg-no-repeat [background-attachment:local,scroll] [background-position:right,right] [background-size:calc(var(--spacing)*8)_100%,calc(var(--spacing)*4)_100%] [background-image:linear-gradient(to_left,var(--background)_50%,transparent),linear-gradient(to_left,color-mix(in_oklab,var(--foreground)_20%,transparent),transparent)]"
+        role="region"
+        aria-label="Students"
+        tabIndex={0}
+      >
         <div className="min-w-2xl">
           <Table>
             <TableHeader>
