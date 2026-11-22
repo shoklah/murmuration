@@ -10,6 +10,7 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Look: `DESIGN.md`
 - Look and rows spec: `docs/superpowers/specs/2026-11-22-look-and-rows-design.md`
 - Look and rows plan: `docs/superpowers/plans/2026-11-22-look-and-rows.md`
+- UI backlog (the kit's audit): `docs/ui-backlog.md`
 
 ## Commands
 
@@ -33,7 +34,6 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
   - base-url: http://localhost:{port}
   - checks-from: .
   - look: direction
-  - adopted: no
   - screens: /src/panel/panel.html?fake, /src/panel/panel.html?fake&at=collecting, /src/panel/panel.html?fake&at=split, /src/panel/panel.html?fake&at=filled, /src/roster-page/roster-page.html?fake
   - theme: src/index.css
   - generated: src/components/ui
