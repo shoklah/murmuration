@@ -31,14 +31,14 @@ Each item has one sensible fix inside the existing components; the alternatives 
 | # | Screen | Change |
 |---|---|---|
 | 1 | roster | The Timeline shows `stageLabel(entry.stage)`, imported from `src/logic/stages.js`. |
-| 2 | roster | Each session in the Timeline is an outline `Badge` in a wrapping flex row with a 4 px gap; the date stays as its tooltip; a guessed stage keeps italic muted text; a session with no stage shows `–`. The empty Timeline keeps its muted dash with the `no sessions yet` label. |
+| 2 | roster | Each session in the Timeline is an outline `Badge` in a wrapping flex row with a 4 px gap; the date stays as its tooltip; a guessed stage keeps italic muted text; a session with no stage shows a muted `–` with an `sr-only` label `no stage` (`DESIGN.md`: unknown is a muted dash with an accessible label). The empty Timeline keeps its muted dash with the `no sessions yet` label. |
 | 3 | roster | The Working group select's "no value" option reads `–`, as Track's does. |
 | 4 | roster | Backup: an outline button `Import backup` opens a hidden `<input type="file">`; the `Label` wrapper goes. Same import behaviour and error alert. |
 | 5 | all panel states with a long Unclear message | `ClampedText`, when it overflows, draws a muted `ChevronDown` (14 px) at the end of the last line, `ChevronUp` when open. The whole button still toggles; the text keeps its two-line clamp. |
 | 6 | collecting, split | `Name` in `Panel.tsx` drops `font-medium`, so names are 400 like room rows. |
 | 7 | collecting, split, filled | `StageSelect`'s placeholder reads `Stage…`; the `last: <stage>` prefix in Not in a room yet and No answer reads `Last: <stage>`. |
 | 8 | collecting, split | The Mix checkbox is drawn just above the button it changes: above Split while there is no plan (as now), inside Rooms just above Re-split once there is one. Its disabled rule (`locked`) is unchanged. |
-| 9 | every screen with an `Input` | `ui/input.tsx` uses `text-sm` at every width (drop `text-base` and `md:text-sm`), as a hand edit. |
+| 9 | every screen with an `Input` or `Textarea` | `ui/input.tsx` and `ui/textarea.tsx` use `text-sm` at every width (drop `text-base` and `md:text-sm`), as hand edits; the roster's "Your Meet names" field is a `Textarea`. |
 
 The rendered mockups (collecting, split, filled and roster at 375 and 1440 px) are in
 `~/.claude/workflow-archive/2026-11-22-claude-ui-backlog-fixes-88fad3-kit/approved/`, with the throwaway
