@@ -232,7 +232,7 @@ function Rooms({ session, actions, members, locked }: Parts) {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">Rooms</h2>
-      {session.outdated && <Alert>Changed since Split. Press Re-split before Fill.</Alert>}
+      {session.outdated && !session.filled && <Alert>Changed since Split. Press Re-split before Fill.</Alert>}
       <ul>
         {session.summary.rooms.map(room => (
           <li key={room.name} className="py-1">

@@ -171,6 +171,7 @@ function GroupsSection({ roster, act }: { roster: Roster; act: Act }) {
                   defaultValue={group.name}
                   aria-label={`Name of working group ${group.name}`}
                   className="w-48 shrink-0"
+                  onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
                   onBlur={e => {
                     const name = e.currentTarget.value;
                     if (name !== group.name) act(() => { group.name = name; });
@@ -308,7 +309,7 @@ export function RosterPage({ store }: { store: RosterStore }) {
   const act: Act = async change => {
     change();
     await store.save({ roster });
-    setData({ roster, history });
+    setData(current => current && { ...current, roster });
   };
 
   const onImport = async (imported: Data) => {

@@ -140,6 +140,7 @@ export function createPanelController({ store, findMeet }) {
 
   // Fills Meet's breakout rooms from the plan, with polling paused meanwhile.
   async function fill() {
+    if (filling) return;
     const filled = session;
     filling = true;
     clearTimeout(pollTimer);
@@ -148,6 +149,12 @@ export function createPanelController({ store, findMeet }) {
     await pollRun;
     // After End, `filling` belongs to the next session: End already cleared it.
     if (session !== filled) return;
+    if (filled.outdated) {
+      filling = false;
+      publish();
+      poll();
+      return;
+    }
     await ensureMeet(filled.meetingCode);
     const result = meet ? await fillRooms(meet, filled, { createRooms: !ownerCreatesRooms }) : null;
     if (session !== filled) return;
@@ -191,6 +198,7 @@ export function createPanelController({ store, findMeet }) {
   }
 
   async function end() {
+    if (!session) return;
     if (!endTimer) {
       endTimer = setTimeout(() => { endTimer = null; publish(); }, END_ARMED_MS);
       publish();
@@ -216,6 +224,7 @@ export function createPanelController({ store, findMeet }) {
 
   // Runs an owner action on the session, saves, then publishes.
   async function act(change) {
+    if (!session) return;
     change();
     await store.save({ current: session, roster: ctx.roster });
     publish();

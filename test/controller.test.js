@@ -221,6 +221,30 @@ test('Fill pressed while a poll is waiting on Meet: the poll finishes first, and
   assert.equal(h.reads, reads + 1);                                  // one poll every 2 seconds, not two
 });
 
+test('Fill pressed while a poll is waiting on Meet that changes a planned stage: nothing is filled, and polling goes on', async () => {
+  const h = await started();
+  await h.controller.split();
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const readParticipants = h.meet.readParticipants;
+  h.meet.readParticipants = async () => { await gate; return readParticipants(); };
+  h.meet.say('Ana', 'PW');
+  await h.tick(2000);                                                // this poll now waits on Meet
+  const done = h.controller.fill();
+  await settle();
+  release();
+  await done;
+  await settle();
+  const session = h.view().session;
+  assert.equal(session.outdated, true);
+  assert.equal(session.filling, false);
+  assert.equal(session.filled, false);
+  assert.deepEqual(h.meet.rooms, []);                                // the old plan is not filled
+  const reads = h.reads;
+  await h.tick(2000);
+  assert.equal(h.reads, reads + 1);                                  // one poll every 2 seconds
+});
+
 test('Fill: Meet cannot create the rooms, the owner creates them, then only names are filled', async () => {
   const h = await started({ unsupported: ['createRooms'] });
   await h.controller.split();
@@ -318,6 +342,25 @@ test('End while Fill is waiting on Meet: the ended session does not come back', 
   const reads = h.reads;
   await h.tick(10000);
   assert.equal(h.reads, reads);                                      // and no poll starts again
+});
+
+test('End and Split pressed while End is saving do nothing', async () => {
+  const h = await started();
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const load = h.store.load;
+  h.store.load = async () => { await gate; return load(); };
+  await h.controller.end();
+  const ending = h.controller.end();                                 // now waits on the store
+  await h.controller.end();
+  await h.controller.split();
+  release();
+  await ending;
+  assert.equal(h.view().session, null);
+  h.store.load = load;
+  await h.controller.start();
+  await settle();
+  assert.equal(h.view().session.endArmed, false);                    // the third press armed nothing
 });
 
 test('after End, the next Start begins clean and knows the stages of the ended session', async () => {

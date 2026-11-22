@@ -5,6 +5,8 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 
 - Spec: `docs/superpowers/specs/2026-11-18-meet-mentoring-groups-design.md`
 - Plan: `docs/superpowers/plans/2026-11-20-meet-mentoring-groups-v1.md`
+- React port spec: `docs/superpowers/specs/2026-11-21-react-port-and-ui-kit-design.md`
+- React port plan: `docs/superpowers/plans/2026-11-21-react-port-and-ui-kit.md`
 
 ## Commands
 
@@ -16,7 +18,7 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
   `.claude/launch.json`).
 - Build: `npm run build` writes `dist/`; `npm run watch` rebuilds it on each save.
 - Check the built extension: `npm run check:extension`, after a build. It loads `dist/` in
-  Playwright's Chromium. It does not cover a live Meet call.
+  Playwright's Chromium (run `npx playwright install chromium` once first). It does not cover a live Meet call.
 - Load in Chrome: `chrome://extensions` → Developer mode → Load unpacked → the
   `dist/` folder.
 - Component catalog: `npm run storybook` (port 6006); `npm run build-storybook` builds it.
@@ -61,7 +63,8 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - A page's `main.tsx` creates its controller or store outside React and renders the page inside `<StrictMode>`; the panel subscribes one `draw` to the controller.
 - Panel stories build each fixed view with a `loaders` function from `fakeAt(at)` and `panelView`, changing state only through `src/logic/` functions before the call.
 - A `Select` option meaning "no value" uses the value `none`, mapped to and from `null` at the component.
-- Page text fields that save to the store are uncontrolled (`defaultValue`), save on blur when changed, and are keyed by the saved value.
+- The Panel keeps End and Fill off while the view says `filling`; a running Fill cannot be cancelled, so nothing else may drive Meet until it returns.
+- Page text fields that save to the store are uncontrolled (`defaultValue`), save on blur when changed, and are keyed by the saved value; Enter in a one-line field blurs it.
 - A table that scrolls sideways sits in `div[role=region][aria-label][tabIndex=0].overflow-x-auto` with a visible `rounded-md border` and the `scroll-shadow-x` utility from `src/index.css` > a `div` with the minimum width > `Table`; the width never goes on `Table`.
 - Hand-written components declare no return type.
-- List rows are keyed by their stable identity: a student by name key, a room by its name, a working group by its id; only plain message lines are keyed by index.
+- List rows are keyed by their stable identity: a student by name key, a room by its name, a working group by its id; rows with no control may be keyed by index.
