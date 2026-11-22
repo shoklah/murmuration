@@ -43,6 +43,8 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 
 - The look follows `DESIGN.md`; the extension is dark only, so tokens in `src/index.css` hold one value each under `:root` and the light values live in `DESIGN.md`.
 - The font is a bundled `woff2` in `src/fonts/`, declared in `src/index.css`.
+- Every page's `<html>` and Storybook's preview carry `class="dark"`, which keeps the generated components' `dark:` variants on; there is no `.dark` token block.
+- The look is hand-edited into `src/components/ui/*` (and `icon-sm` is 28 px); regenerating a component with the shadcn CLI drops it, so re-apply the edits after.
 - The pages are React in `.tsx`, styled with Tailwind and shadcn components and built by Vite into `dist/`; every other file is plain JavaScript.
 - `meet.js`, `background.js` and `manifest.json` are copied into `dist/` unchanged.
 - The built extension makes no network request.
@@ -74,3 +76,4 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Hand-written components declare no return type.
 - List rows are keyed by their stable identity: a student by name key, a room by its name, a working group by its id; rows with no control may be keyed by index.
 - Every panel row uses the one row grid in `Panel.tsx`: the name cell first, then fixed trailing columns; a row action is an icon button whose label is its tooltip and accessible name.
+- A room's pill, rows and tally cluster all draw from `roomPeople` in `Panel.tsx` (members, then students placed after Fill); pages do not read the summary's `room.active` or `room.units`.

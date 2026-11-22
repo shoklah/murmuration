@@ -200,7 +200,7 @@ function RoomCluster({ room, members, ties }: { room: RoomSummary; members: Map<
   const height = (bottom > 0 ? RISE : 0) + 2 * PAD;
   const label = order.length === 1 ? `${room.name}: 1 student` : `${room.name}: ${order.length} students`;
   return (
-    <svg role="img" aria-label={label} width={width} height={height} viewBox={`${-PAD} ${-PAD} ${width} ${height}`}>
+    <svg role="img" aria-label={label} className="overflow-visible" width={width} height={height} viewBox={`${-PAD} ${-PAD} ${width} ${height}`}>
       <title>{label}</title>
       {order.map((m, i) => {
         const next = order[i + 1];
@@ -212,7 +212,7 @@ function RoomCluster({ room, members, ties }: { room: RoomSummary; members: Map<
       {order.map((m, i) => {
         const [x, y] = at(i);
         return m.active
-          ? <path key={m.key} className="fill-star stroke-star" d={STAR} transform={`translate(${x} ${y})`} />
+          ? <path key={m.key} className="fill-star stroke-star" strokeWidth={0.9} strokeLinejoin="round" d={STAR} transform={`translate(${x} ${y})`} />
           : <circle key={m.key} className="fill-primary" cx={x} cy={y} r={3.2} />;
       })}
     </svg>
@@ -229,6 +229,7 @@ function Tally({ session, actions, members, locked }: Parts) {
       {summary.stages.map(line => {
         const lone = summary.lone.find(l => l.stage === line.stage);
         const joining = lone && lone.choice === 'join' && lone.joinRoom;
+        const loneText = lone && (joining ? `${lone.name} joins ${lone.joinRoom}` : `${lone.name} is alone`);
         return (
           <li key={line.stage} className="col-span-full grid min-h-8 grid-cols-subgrid items-center">
             <span className="min-w-0 truncate font-strong" title={line.label}>{line.label}</span>
@@ -241,9 +242,7 @@ function Tally({ session, actions, members, locked }: Parts) {
               </span>
             ) : (
               <span className="flex min-w-0 items-center gap-1">
-                <span className={`min-w-0 flex-1 truncate ${muted}`}>
-                  {joining ? `${lone.name} joins ${lone.joinRoom}` : `${lone.name} is alone`}
-                </span>
+                <span className={`min-w-0 flex-1 truncate ${muted}`} title={loneText}>{loneText}</span>
                 <IconButton
                   label={`Keep ${lone.name} alone`}
                   pressed={lone.choice === 'alone'}
