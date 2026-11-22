@@ -31,7 +31,7 @@ Each item has one sensible fix inside the existing components; the alternatives 
 | # | Screen | Change |
 |---|---|---|
 | 1 | roster | The Timeline shows `stageLabel(entry.stage)`, imported from `src/logic/stages.js`. |
-| 2 | roster | Each session in the Timeline is an outline `Badge` in a wrapping flex row with a 4 px gap; the date stays as its tooltip; a guessed stage keeps italic muted text; a session with no stage shows a muted `–` with an `sr-only` label `no stage` (`DESIGN.md`: unknown is a muted dash with an accessible label). The empty Timeline keeps its muted dash with the `no sessions yet` label. |
+| 2 | roster | Each session in the Timeline is an outline `Badge` in a wrapping flex row with a 4 px gap; the date stays as its tooltip; a guessed stage keeps italic muted text; a session with no stage shows a muted `–` with an `sr-only` label `no stage` (`DESIGN.md`: unknown is a muted dash with an accessible label). The empty Timeline keeps its muted dash with the `no sessions yet` label. The Name column gets a minimum width so the pills wrap rather than squeeze names (owner, at plan approval). |
 | 3 | roster | The Working group select's "no value" option reads `–`, as Track's does. |
 | 4 | roster | Backup: an outline button `Import backup` opens a hidden `<input type="file">`; the `Label` wrapper goes. Same import behaviour and error alert. |
 | 5 | all panel states with a long Unclear message | `ClampedText`, when it overflows, draws a muted `ChevronDown` (14 px) at the end of the last line, `ChevronUp` when open. The whole button still toggles; the text keeps its two-line clamp. |
