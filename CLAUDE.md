@@ -73,3 +73,4 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - A table that scrolls sideways sits in `div[role=region][aria-label][tabIndex=0].overflow-x-auto` with a visible `rounded-md border` and the `scroll-shadow-x` utility from `src/index.css` > a `div` with the minimum width > `Table`; the width never goes on `Table`.
 - Hand-written components declare no return type.
 - List rows are keyed by their stable identity: a student by name key, a room by its name, a working group by its id; rows with no control may be keyed by index.
+- Every panel row uses the one row grid in `Panel.tsx`: the name cell first, then fixed trailing columns; a row action is an icon button whose label is its tooltip and accessible name.
