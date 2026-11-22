@@ -1,7 +1,7 @@
 # Murmuration: the look and the panel's rows
 
 Date: 2026-11-22
-Status: draft for the owner's approval
+Status: approved by the owner on 2026-11-22
 
 ## Why
 
