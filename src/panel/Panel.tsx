@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react';
-import { Check, Diamond, Eye, EyeOff, Star } from 'lucide-react';
+import { Check, Diamond, Eye, EyeOff, Star, User, Users } from 'lucide-react';
 import { stageLabel } from '@/logic/stages.js';
 import { nameKey } from '@/logic/roster.js';
 import { Alert } from '@/components/ui/alert';
@@ -125,7 +125,6 @@ function Section({ title, children }: { title: string; children: ReactNode[] }) 
   );
 }
 
-const rowClass = 'flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b py-1';
 const muted = 'text-muted-foreground';
 
 // Every list row: one line high, its name cell first, its controls in fixed columns at the trailing edge.
@@ -177,58 +176,93 @@ function RoomSize({ room, members, ties }: { room: RoomSummary; members: Map<str
   );
 }
 
-// A room's size with ★ per active student and ◆ per working group in it.
-function roomSize(room: RoomSummary) {
-  const marks = '★'.repeat(room.active) + '◆'.repeat(room.units);
-  return marks ? `${room.members.length} ${marks}` : String(room.members.length);
+// A room in the tally: one mark per student in two rows packed like a honeycomb.
+// A star is an active student, a dot anyone else, and, when `ties`, a line ties the students of one working group.
+const STEP = 13;
+const RISE = STEP * 0.866;
+const PAD = 6;
+const STAR = 'M0-5.2 1.29-1.78 4.95-1.61 2.09.68 3.06 4.21 0 2.2-3.06 4.21-2.09.68-4.95-1.61-1.29-1.78z';
+
+function RoomCluster({ room, members, ties }: { room: RoomSummary; members: Map<string, Member>; ties: boolean }) {
+  const people = roomPeople(room, members);
+  // Working groups with two or more students here come first, so they sit side by side and their tie is one short line.
+  const together = (m: Member) => ties && m.group !== null && people.filter(o => o.group === m.group).length > 1;
+  const order = [
+    ...people.filter(together).sort((a, b) => a.group!.localeCompare(b.group!)),
+    ...people.filter(m => !together(m)).sort((a, b) => Number(b.active) - Number(a.active)),
+  ];
+  const top = order.length <= 2 ? order.length : Math.ceil(order.length / 2);
+  const bottom = order.length - top;
+  // The top row runs left to right, the bottom row back from the right, so neighbours in `order` touch.
+  const at = (i: number) => (i < top ? [i * STEP, 0] : [(bottom - 1 - (i - top)) * STEP + STEP / 2, RISE]);
+  const width = Math.max((top - 1) * STEP, bottom > 0 ? (bottom - 0.5) * STEP : 0) + 2 * PAD;
+  const height = (bottom > 0 ? RISE : 0) + 2 * PAD;
+  const label = order.length === 1 ? `${room.name}: 1 student` : `${room.name}: ${order.length} students`;
+  return (
+    <svg role="img" aria-label={label} width={width} height={height} viewBox={`${-PAD} ${-PAD} ${width} ${height}`}>
+      <title>{label}</title>
+      {order.map((m, i) => {
+        const next = order[i + 1];
+        if (!together(m) || !next || next.group !== m.group) return null;
+        const [x1, y1] = at(i);
+        const [x2, y2] = at(i + 1);
+        return <line key={`tie-${m.key}`} className="stroke-primary/60" strokeWidth={1.6} strokeLinecap="round" x1={x1} y1={y1} x2={x2} y2={y2} />;
+      })}
+      {order.map((m, i) => {
+        const [x, y] = at(i);
+        return m.active
+          ? <path key={m.key} className="fill-star stroke-star" d={STAR} transform={`translate(${x} ${y})`} />
+          : <circle key={m.key} className="fill-primary" cx={x} cy={y} r={3.2} />;
+      })}
+    </svg>
+  );
 }
 
-function Tally({ session, actions, locked }: Parts) {
+function Tally({ session, actions, members, locked }: Parts) {
   const { summary } = session;
   if (summary.answers === 0) {
     return <p className={muted}>No answers yet. Students write their stage in the Meet chat.</p>;
   }
   return (
-    <ul>
+    <ul className="grid grid-cols-[auto_auto_minmax(0,1fr)] gap-x-3">
       {summary.stages.map(line => {
         const lone = summary.lone.find(l => l.stage === line.stage);
-        let rest: ReactNode;
-        if (!lone) {
-          const sizes = line.rooms.map(roomSize).join(', ');
-          rest = <span className={muted}>{line.rooms.length === 1 ? `→ 1 room (${sizes})` : `→ ${line.rooms.length} rooms (${sizes})`}</span>;
-        } else {
-          const joining = lone.choice === 'join' && lone.joinRoom;
-          rest = (
-            <>
-              <span className={muted}>{joining ? `→ ${lone.name} joins ${lone.joinRoom}` : `→ ${lone.name} is alone`}</span>
-              <Button
-                size="sm"
-                variant={lone.choice === 'alone' ? 'secondary' : 'outline'}
-                aria-pressed={lone.choice === 'alone'}
-                disabled={locked}
-                onClick={() => actions.setLone(lone.key, 'alone')}
-              >
-                Keep alone
-              </Button>
-              {lone.joinRoom && (
-                <Button
-                  size="sm"
-                  variant={lone.choice === 'join' ? 'secondary' : 'outline'}
-                  aria-pressed={lone.choice === 'join'}
-                  disabled={locked}
-                  onClick={() => actions.setLone(lone.key, 'join')}
-                >
-                  {`Join ${lone.joinRoom}`}
-                </Button>
-              )}
-            </>
-          );
-        }
+        const joining = lone && lone.choice === 'join' && lone.joinRoom;
         return (
-          <li key={line.stage} className={rowClass}>
-            <Name>{line.label}</Name>
-            <span className="tabular-nums">{line.count}</span>
-            {rest}
+          <li key={line.stage} className="col-span-3 grid min-h-8 grid-cols-subgrid items-center">
+            <span className="min-w-0 truncate font-strong" title={line.label}>{line.label}</span>
+            <span className="text-right tabular-nums">{line.count}</span>
+            {!lone ? (
+              <span className="flex flex-wrap items-center gap-x-4 gap-y-1 py-1">
+                {line.rooms.map(room => (
+                  <RoomCluster key={room.name} room={room} members={members} ties={!session.mixWorkingGroups} />
+                ))}
+              </span>
+            ) : (
+              <span className="flex min-w-0 items-center gap-1">
+                <span className={`min-w-0 flex-1 truncate ${muted}`}>
+                  {joining ? `${lone.name} joins ${lone.joinRoom}` : `${lone.name} is alone`}
+                </span>
+                <IconButton
+                  label={`Keep ${lone.name} alone`}
+                  pressed={lone.choice === 'alone'}
+                  disabled={locked}
+                  onClick={() => actions.setLone(lone.key, 'alone')}
+                >
+                  <User />
+                </IconButton>
+                {lone.joinRoom && (
+                  <IconButton
+                    label={`${lone.name} joins ${lone.joinRoom}`}
+                    pressed={lone.choice === 'join'}
+                    disabled={locked}
+                    onClick={() => actions.setLone(lone.key, 'join')}
+                  >
+                    <Users />
+                  </IconButton>
+                )}
+              </span>
+            )}
           </li>
         );
       })}
