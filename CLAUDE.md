@@ -78,4 +78,6 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Hand-written components declare no return type.
 - List rows are keyed by their stable identity: a student by name key, a room by its name, a working group by its id; rows with no control may be keyed by index.
 - Every panel row uses the one row grid in `Panel.tsx`: the name cell first, then fixed trailing columns; a row action is an icon button whose label is its tooltip and accessible name.
+- A control that changes what one button does is drawn just above that button: the Mix checkbox sits above Split until there is a plan, then in Rooms above Re-split.
+- A file is picked through an outline `Button` that clicks a hidden `<input type="file">` by its ref; no native file field is drawn.
 - A room's pill, rows and tally cluster all draw from `roomPeople` in `Panel.tsx` (members, then students placed after Fill); pages do not read the summary's `room.active` or `room.units`.
