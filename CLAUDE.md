@@ -7,6 +7,9 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Plan: `docs/superpowers/plans/2026-11-20-meet-mentoring-groups-v1.md`
 - React port spec: `docs/superpowers/specs/2026-11-21-react-port-and-ui-kit-design.md`
 - React port plan: `docs/superpowers/plans/2026-11-21-react-port-and-ui-kit.md`
+- Look: `DESIGN.md`
+- Look and rows spec: `docs/superpowers/specs/2026-11-22-look-and-rows-design.md`
+- Look and rows plan: `docs/superpowers/plans/2026-11-22-look-and-rows.md`
 
 ## Commands
 
@@ -38,6 +41,8 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 
 ## Code conventions
 
+- The look follows `DESIGN.md`; the extension is dark only, so tokens in `src/index.css` hold one value each under `:root` and the light values live in `DESIGN.md`.
+- The font is a bundled `woff2` in `src/fonts/`, declared in `src/index.css`.
 - The pages are React in `.tsx`, styled with Tailwind and shadcn components and built by Vite into `dist/`; every other file is plain JavaScript.
 - `meet.js`, `background.js` and `manifest.json` are copied into `dist/` unchanged.
 - The built extension makes no network request.

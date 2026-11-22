@@ -36,7 +36,7 @@ export function Panel({ view, actions, rosterHref, onOpenRoster, fake }: {
   return (
     <main className="flex w-full min-w-0 flex-col gap-4 p-3 text-sm wrap-anywhere">
       <header className="flex items-baseline justify-between gap-2">
-        <h1 className="text-base font-semibold">Murmuration</h1>
+        <h1 className="text-xl font-strong tracking-title">Murmuration</h1>
         {answers && <span className="tabular-nums">{answers}</span>}
       </header>
       {!view.loading && (
@@ -69,7 +69,6 @@ export function Panel({ view, actions, rosterHref, onOpenRoster, fake }: {
             <a
               href={rosterHref}
               target="_blank"
-              className="text-primary underline underline-offset-4"
               onClick={onOpenRoster && (event => { event.preventDefault(); onOpenRoster(); })}
             >
               Roster
@@ -118,7 +117,7 @@ function Section({ title, children }: { title: string; children: ReactNode[] }) 
   if (children.length === 0) return null;
   return (
     <section className="flex flex-col gap-1">
-      <h2 className="font-semibold">{title}</h2>
+      <h2 className="font-strong">{title}</h2>
       <ul>{children}</ul>
     </section>
   );
@@ -231,7 +230,7 @@ function Rooms({ session, actions, members, locked }: Parts) {
   const fillText = session.filling ? 'Filling rooms…' : session.ownerCreatesRooms ? 'Fill names' : 'Fill breakout rooms';
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="font-semibold">Rooms</h2>
+      <h2 className="font-strong">Rooms</h2>
       {session.outdated && !session.filled && <Alert>Changed since Split. Press Re-split before Fill.</Alert>}
       <ul>
         {session.summary.rooms.map(room => (
@@ -362,7 +361,7 @@ function FakeMeet({ fake }: { fake: FakeMeetBox }) {
   }
   return (
     <section className="flex flex-col gap-2 rounded-md border border-dashed p-2">
-      <h2 className="font-semibold">Fake Meet</h2>
+      <h2 className="font-strong">Fake Meet</h2>
       <form className="flex gap-2" onSubmit={say}>
         <Input name="line" placeholder="Name: message" aria-label="Name: message" autoComplete="off" />
         <Button type="submit" variant="outline">Send</Button>

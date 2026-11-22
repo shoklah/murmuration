@@ -23,6 +23,7 @@ colors:
   border: "#2a2d33"
   input: "#4c4f55"
   ring: "#58cfae"
+  field: "#101216"
   star: "#f6c544"
   sheen-green: "#40be9c"
   sheen-violet: "#8468ff"
@@ -111,8 +112,9 @@ comes first: rows on one grid, one line each, actions as icons at the trailing e
 | accent | `#1c2a29` | the highlighted item in a dropdown |
 | destructive | `#ff9580` | error text and the error box's border |
 | border | `#2a2d33` | table and box lines |
-| input | `#4c4f55` | field and outline-button borders |
+| input | `#4c4f55` | kept for the stack's components; the look's own borders are cream hairlines |
 | ring | `#58cfae` | keyboard focus |
+| field | `#101216` | the fill of fields and dropdowns |
 | star | `#f6c544` | a lit active star, in rows and in the tally |
 | sheen-green, sheen-violet | `#40be9c`, `#8468ff` | the sheen only, at 20 to 30 % opacity |
 | line | `#f4ecd6` at 14 % | room outlines and the rule under a room's name |
@@ -236,6 +238,7 @@ so one can be added later without redesigning.
 | border | `#2a2d33` | `#ddd6c2` |
 | input | `#4c4f55` | `#a8a290` |
 | ring | `#58cfae` | `#1f8f74` |
+| field | `#101216` | `#fffdf6` |
 | star | `#f6c544` | `#a96f00` |
 | sheen-green | `#40be9c` | `#40be9c` |
 | sheen-violet | `#8468ff` | `#8468ff` |
