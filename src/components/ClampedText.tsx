@@ -9,7 +9,8 @@ export function ClampedText({ text, className }: { text: string; className?: str
   const [open, setOpen] = useState(false);
 
   // Measured only while clamped, and again whenever the width changes (the side panel can be dragged wider).
-  // `overflows` is a dependency because it swaps the element between a span and a button.
+  // `overflows` is a dependency because the measured span changes: alone, or inside the button.
+  // `ref` stays on the element carrying the clamp: the button does not clip, so it would always measure as fitting.
   useLayoutEffect(() => {
     const node = ref.current;
     if (!node || open) return;

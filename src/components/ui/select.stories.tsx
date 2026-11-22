@@ -8,7 +8,7 @@ const meta = {
   render: args => (
     <Select {...args}>
       <SelectTrigger>
-        <SelectValue placeholder="stage…" />
+        <SelectValue placeholder="Stage…" />
       </SelectTrigger>
       <SelectContent>
         {STAGES.map(stage => (

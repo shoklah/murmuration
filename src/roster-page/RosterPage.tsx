@@ -89,7 +89,7 @@ function StudentRow({ studentKey, student, groupOptions, history, act }: {
           onChange={group => act(() => { student.group = group; })}
         />
       </TableCell>
-      <TableCell className="whitespace-normal wrap-anywhere">
+      <TableCell>
         {entries.length === 0 ? (
           <Unknown label="no sessions yet" />
         ) : (
