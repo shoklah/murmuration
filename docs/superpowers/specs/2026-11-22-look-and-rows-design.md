@@ -77,13 +77,17 @@ seen in use informs this design yet.
 `DESIGN.md` is the reference. How it lands in the code:
 
 - **Tokens:** `src/index.css` holds the `DESIGN.md` dark values under `:root`, with
-  `color-scheme: dark`. The `.dark` block is removed, since nothing switches it. New tokens:
+  `color-scheme: dark`. The `.dark` block is removed, since nothing switches it. The generated
+  components style several states only through `dark:` classes, so both pages' `<html>` and
+  Storybook's preview carry `class="dark"`, which keeps that variant on, as it was in the
+  mockups *(my call)*. New tokens:
   `--star`, `--sheen-green`, `--sheen-violet`, `--line`, each mapped in `@theme inline`.
   *(my call: the stack file asks for a light and a dark value per token; with a dark-only
   extension the light values live in `DESIGN.md` only. `CLAUDE.md` records this.)*
 - **Font:** `source-sans-3-latin-wght-normal.woff2` (OFL-1.1, from
   `@fontsource-variable/source-sans-3` 5.3.1), copied from the throwaway branch into
-  `src/fonts/` with its licence text beside it, declared by `@font-face` in `src/index.css` and
+  `src/fonts/` with the package's OFL licence text beside it (taken from the package's tarball
+  with `npm pack` in a scratch folder; no dependency is added), declared by `@font-face` in `src/index.css` and
   set as `--font-sans`. Latin only *(my call)*: names outside it fall back to the system font.
 - **Page:** the near-black background with the green and violet glow at the top, on `body`, on
   both pages.
@@ -104,7 +108,7 @@ hover highlight and no rule between rows.
 
 | Section | Name cell | Trailing columns |
 |---|---|---|
-| Room member | name; working group (diamond and name, muted); `new`; `?` when the stage was guessed; a stage tag when their stage differs from the room's | star (roster students only); before Fill: change stage (icon), ignore (icon) |
+| Room member (a student not on the roster keeps an empty star column, so the icons line up) | name; working group (diamond and name, muted); `new`; `?` when the stage was guessed; a stage tag when their stage differs from the room's | star (roster students only); before Fill: change stage (icon), ignore (icon) |
 | Not in a room yet | name; `last: <stage>` muted when the stage is a guess | stage dropdown, placed (check icon); then one muted line under the row: `Suggested: <room>`, `No room fits <stage>` or `No stage yet` |
 | Flags | the existing sentence | stage dropdown |
 | Unclear | name; `new` | stage dropdown, ignore; then the clamped message under the row |
@@ -138,7 +142,12 @@ A three-column grid: stage label, count (right-aligned, tabular), rooms.
   gap between marks.
 - Each cluster is an image with the accessible name `<room>: <n> students` (`1 student` as its
   own string), also its tooltip.
-- **Before Split** there are no rooms: the row shows the label and the count only.
+- **Before Split** the clusters show the rooms Split would make, as today's tally does.
+- **After Fill**, a student marked placed in a room counts in that room's cluster and in its
+  count pill, so both agree with the preview's rows. *(my call: today the pill leaves them out)*
+- **Mix working groups:** when it is on, no tie is drawn, as the pill shows no diamond. The
+  member row's diamond is unchanged. Ties match on the group's name, the only thing the view
+  gives.
 - **A student alone** keeps today's row: `<name> is alone` or `<name> joins <room>`, muted, with
   the keep-alone and join icon buttons.
 - The cluster is a function inside `Panel.tsx` *(my call: it is used once)*. It reads the same
