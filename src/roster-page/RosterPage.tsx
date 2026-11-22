@@ -1,14 +1,14 @@
 // The roster page: students, working groups, the owner's Meet names, backup and CSV.
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { createGroup, deleteGroup } from '@/logic/roster.js';
 import { timeline, historyToCsv, exportBackup, parseBackup } from '@/logic/history.js';
-import { TRACKS, trackLabel } from '@/logic/stages.js';
+import { TRACKS, trackLabel, stageLabel } from '@/logic/stages.js';
 import { ActiveToggle } from '@/components/ActiveToggle';
 import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,13 +52,22 @@ function NullableSelect({ noneText, options, value, label, onChange }: {
 
 const TRACK_OPTIONS = TRACKS.map((t): [string, string] => [t, trackLabel(t)]);
 
+function Unknown({ label }: { label: string }) {
+  return (
+    <span className="text-muted-foreground">
+      <span aria-hidden="true">–</span>
+      <span className="sr-only">{label}</span>
+    </span>
+  );
+}
+
 function StudentRow({ studentKey, student, groupOptions, history, act }: {
   studentKey: string; student: Student; groupOptions: [string, string][]; history: SessionRecord[]; act: Act;
 }) {
   const entries = timeline(history, studentKey);
   return (
     <TableRow>
-      <TableCell className="whitespace-normal wrap-anywhere">{student.name}</TableCell>
+      <TableCell className="min-w-32 whitespace-normal wrap-anywhere">{student.name}</TableCell>
       <TableCell>
         <NullableSelect
           noneText="–"
@@ -73,28 +82,30 @@ function StudentRow({ studentKey, student, groupOptions, history, act }: {
       </TableCell>
       <TableCell>
         <NullableSelect
-          noneText="none"
+          noneText="–"
           options={groupOptions}
           value={student.group}
           label={`Working group for ${student.name}`}
           onChange={group => act(() => { student.group = group; })}
         />
       </TableCell>
-      <TableCell className="whitespace-normal wrap-anywhere">
+      <TableCell>
         {entries.length === 0 ? (
-          <span className="text-muted-foreground">
-            <span aria-hidden="true">–</span>
-            <span className="sr-only">no sessions yet</span>
-          </span>
-        ) : entries.map(entry => (
-          <span
-            key={entry.startedAt}
-            title={entry.startedAt.slice(0, 10)}
-            className={entry.source === 'guess' ? 'mr-1.5 italic text-muted-foreground' : 'mr-1.5'}
-          >
-            {entry.stage ?? '–'}
-          </span>
-        ))}
+          <Unknown label="no sessions yet" />
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {entries.map(entry => (
+              <Badge
+                key={entry.startedAt}
+                variant="outline"
+                title={entry.startedAt.slice(0, 10)}
+                className={entry.source === 'guess' ? 'italic text-muted-foreground' : undefined}
+              >
+                {entry.stage === null ? <Unknown label="no stage" /> : stageLabel(entry.stage)}
+              </Badge>
+            ))}
+          </div>
+        )}
       </TableCell>
     </TableRow>
   );
@@ -236,6 +247,7 @@ function download(name: string, text: string, type: string) {
 
 function BackupSection({ data, onImport }: { data: Data; onImport: (data: Data) => Promise<void> }) {
   const [importError, setImportError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const importBackup = async (file: File) => {
     let parsed: Data;
@@ -266,18 +278,17 @@ function BackupSection({ data, onImport }: { data: Data; onImport: (data: Data) 
         >
           Export CSV
         </Button>
-        <Label className="min-w-0">
-          Import backup
-          <Input
-            type="file"
-            className="w-auto"
-            onChange={e => {
-              const file = e.currentTarget.files?.[0];
-              e.currentTarget.value = '';
-              if (file) importBackup(file);
-            }}
-          />
-        </Label>
+        <Button variant="outline" onClick={() => fileInput.current?.click()}>Import backup</Button>
+        <input
+          ref={fileInput}
+          type="file"
+          hidden
+          onChange={e => {
+            const file = e.currentTarget.files?.[0];
+            e.currentTarget.value = '';
+            if (file) importBackup(file);
+          }}
+        />
       </div>
       {importError && <Alert variant="destructive">{importError}</Alert>}
     </section>
