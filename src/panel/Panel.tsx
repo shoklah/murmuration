@@ -2,6 +2,7 @@ import type { FormEvent, ReactNode } from 'react';
 import { Check, Diamond, Eye, EyeOff, Star, User, Users } from 'lucide-react';
 import { stageLabel } from '@/logic/stages.js';
 import { nameKey } from '@/logic/roster.js';
+import { unitsOf } from '@/logic/grouping.js';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -145,7 +146,7 @@ function IconButton({ label, pressed, disabled, onClick, children }: {
     <Button
       variant={pressed ? 'secondary' : 'ghost'}
       size="icon-sm"
-      className={pressed ? 'size-7' : 'size-7 text-muted-foreground hover:text-foreground'}
+      className={pressed ? undefined : 'text-muted-foreground hover:text-foreground'}
       aria-label={label}
       title={label}
       aria-pressed={pressed}
@@ -165,8 +166,7 @@ const roomPeople = (room: RoomSummary, members: Map<string, Member>) => [...room
 function RoomSize({ room, members, ties }: { room: RoomSummary; members: Map<string, Member>; ties: boolean }) {
   const people = roomPeople(room, members);
   const active = people.filter(m => m.active).length;
-  const groups = people.map(m => m.group).filter((g, i, all): g is string => g !== null && all.indexOf(g) === i);
-  const units = ties ? groups.filter(g => people.filter(m => m.group === g).length > 1).length : 0;
+  const units = ties ? unitsOf(people).length : 0;
   return (
     <Badge className="font-bold tabular-nums">
       {people.length}
@@ -186,7 +186,8 @@ const STAR = 'M0-5.2 1.29-1.78 4.95-1.61 2.09.68 3.06 4.21 0 2.2-3.06 4.21-2.09.
 function RoomCluster({ room, members, ties }: { room: RoomSummary; members: Map<string, Member>; ties: boolean }) {
   const people = roomPeople(room, members);
   // Working groups with two or more students here come first, so they sit side by side and their tie is one short line.
-  const together = (m: Member) => ties && m.group !== null && people.filter(o => o.group === m.group).length > 1;
+  const tied = new Set(ties ? unitsOf(people).flat() : []);
+  const together = (m: Member) => tied.has(m);
   const order = [
     ...people.filter(together).sort((a, b) => a.group!.localeCompare(b.group!)),
     ...people.filter(m => !together(m)).sort((a, b) => Number(b.active) - Number(a.active)),
@@ -229,7 +230,7 @@ function Tally({ session, actions, members, locked }: Parts) {
         const lone = summary.lone.find(l => l.stage === line.stage);
         const joining = lone && lone.choice === 'join' && lone.joinRoom;
         return (
-          <li key={line.stage} className="col-span-3 grid min-h-8 grid-cols-subgrid items-center">
+          <li key={line.stage} className="col-span-full grid min-h-8 grid-cols-subgrid items-center">
             <span className="min-w-0 truncate font-strong" title={line.label}>{line.label}</span>
             <span className="text-right tabular-nums">{line.count}</span>
             {!lone ? (
@@ -270,15 +271,20 @@ function Tally({ session, actions, members, locked }: Parts) {
   );
 }
 
+// A working group's mark: a diamond and its name, muted.
+const GroupMark = ({ name }: { name: string }) => (
+  <span className={`flex min-w-0 items-center gap-1 ${muted}`}>
+    <Diamond className="size-2.5 shrink-0 fill-current" />
+    <span className="min-w-0 truncate" title={name}>{name}</span>
+  </span>
+);
+
 function SplitGroups({ session }: { session: SessionView }) {
   return (
     <Section title="Working groups split by stage">
       {session.summary.splitGroups.map((g, i) => (
         <li key={i} className="not-first:pt-1">
-          <span className={`flex min-w-0 items-center gap-1.5 ${muted}`}>
-            <Diamond className="size-2.5 shrink-0 fill-current" />
-            <span className="min-w-0 truncate" title={g.group ?? 'Working group'}>{g.group ?? 'Working group'}</span>
-          </span>
+          <GroupMark name={g.group ?? 'Working group'} />
           <ul>
             {g.members.map(m => (
               <li key={nameKey(m.name)} className={row} style={cols('auto')}>
@@ -299,12 +305,7 @@ function MemberRow({ member, roomStage, actions, locked }: { member: Member; roo
     <li className={row} style={locked ? cols(ICON) : cols(ICON, ICON, ICON)}>
       <span className="flex min-w-0 items-center gap-1.5">
         <span className="min-w-0 truncate" title={member.message ? `${member.name}: ${member.message}` : member.name}>{member.name}</span>
-        {member.onRoster && member.group && (
-          <span className={`flex min-w-0 items-center gap-1 ${muted}`}>
-            <Diamond className="size-2.5 shrink-0 fill-current" />
-            <span className="min-w-0 truncate" title={member.group}>{member.group}</span>
-          </span>
-        )}
+        {member.onRoster && member.group && <GroupMark name={member.group} />}
         <NewBadge isNew={member.isNew} />
         {member.guessed && <Badge variant="secondary" title="Guessed stage">?</Badge>}
         {member.stage !== null && member.stage !== roomStage && <Badge variant="outline">{stageLabel(member.stage)}</Badge>}
@@ -393,7 +394,7 @@ function NotInRoom({ session, actions, members }: Parts) {
             >
               <Check />
             </IconButton>
-            <span className={`col-span-3 truncate pb-1 ${muted}`}>{hint}</span>
+            <span className={`col-span-full truncate pb-1 ${muted}`}>{hint}</span>
           </li>
         );
       })}
@@ -427,7 +428,7 @@ function Unclear({ session, actions, locked }: Parts) {
           <IconButton label={`Ignore ${u.name}`} disabled={locked} onClick={() => actions.setIgnored(u.key, true)}>
             <EyeOff />
           </IconButton>
-          <ClampedText text={u.text} className={`col-span-3 ${muted}`} />
+          <ClampedText text={u.text} className={`col-span-full ${muted}`} />
         </li>
       ))}
     </Section>

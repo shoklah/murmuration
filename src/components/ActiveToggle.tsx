@@ -7,7 +7,6 @@ export function ActiveToggle({ active, onToggle, label }: { active: boolean; onT
     <Button
       variant="ghost"
       size="icon-sm"
-      className="size-7"
       aria-pressed={active}
       onClick={onToggle}
       aria-label={label}
