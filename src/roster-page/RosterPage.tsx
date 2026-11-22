@@ -105,7 +105,7 @@ function StudentsSection({ roster, history, act }: { roster: Roster; history: Se
   const groupOptions = Object.entries(roster.groups).map(([id, g]): [string, string] => [id, g.name]);
   return (
     <section className="space-y-2">
-      <h2 className="text-base font-semibold">Students</h2>
+      <h2 className="font-strong">Students</h2>
       {/* The named region scrolls, not the Table's own container: the minimum width sits between them. */}
       <div
         className="overflow-x-auto rounded-md border scroll-shadow-x"
@@ -156,7 +156,7 @@ function GroupsSection({ roster, act }: { roster: Roster; act: Act }) {
 
   return (
     <section className="space-y-2">
-      <h2 className="text-base font-semibold">Working groups</h2>
+      <h2 className="font-strong">Working groups</h2>
       {groups.length === 0 ? (
         <p className="text-muted-foreground">No working groups yet.</p>
       ) : (
@@ -204,7 +204,7 @@ function OwnerNamesSection({ roster, act }: { roster: Roster; act: Act }) {
   const text = roster.ownerNames.join('\n');
   return (
     <section className="space-y-2">
-      <h2 id="owner-names-heading" className="text-base font-semibold">Your Meet names</h2>
+      <h2 id="owner-names-heading" className="font-strong">Your Meet names</h2>
       <p className="text-muted-foreground">One name per line. Messages from these names never count as a student's.</p>
       <Textarea
         key={text}
@@ -252,7 +252,7 @@ function BackupSection({ data, onImport }: { data: Data; onImport: (data: Data) 
 
   return (
     <section className="space-y-2">
-      <h2 className="text-base font-semibold">Backup</h2>
+      <h2 className="font-strong">Backup</h2>
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant="outline"
@@ -298,7 +298,7 @@ export function RosterPage({ store }: { store: RosterStore }) {
   if (!data) {
     return (
       <main className="p-4">
-        <h1 className="text-lg font-semibold">Roster</h1>
+        <h1 className="text-xl font-strong tracking-title">Roster</h1>
       </main>
     );
   }
@@ -319,7 +319,7 @@ export function RosterPage({ store }: { store: RosterStore }) {
 
   return (
     <main className="space-y-6 p-4 text-sm">
-      <h1 className="text-lg font-semibold">Roster</h1>
+      <h1 className="text-xl font-strong tracking-title">Roster</h1>
       <StudentsSection roster={roster} history={history} act={act} />
       <GroupsSection roster={roster} act={act} />
       <OwnerNamesSection roster={roster} act={act} />

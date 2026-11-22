@@ -13,3 +13,4 @@ type Story = StoryObj<typeof meta>;
 export const Empty: Story = {};
 export const WithStage: Story = { args: { value: 'S02DS' } };
 export const Disabled: Story = { args: { disabled: true } };
+export const Compact: Story = { args: { compact: true, value: 'S02DS', label: 'Change stage for Ana' } };

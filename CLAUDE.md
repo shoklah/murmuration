@@ -7,6 +7,9 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Plan: `docs/superpowers/plans/2026-11-20-meet-mentoring-groups-v1.md`
 - React port spec: `docs/superpowers/specs/2026-11-21-react-port-and-ui-kit-design.md`
 - React port plan: `docs/superpowers/plans/2026-11-21-react-port-and-ui-kit.md`
+- Look: `DESIGN.md`
+- Look and rows spec: `docs/superpowers/specs/2026-11-22-look-and-rows-design.md`
+- Look and rows plan: `docs/superpowers/plans/2026-11-22-look-and-rows.md`
 
 ## Commands
 
@@ -38,6 +41,10 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 
 ## Code conventions
 
+- The look follows `DESIGN.md`; the extension is dark only, so tokens in `src/index.css` hold one value each under `:root` and the light values live in `DESIGN.md`.
+- The font is a bundled `woff2` in `src/fonts/`, declared in `src/index.css`.
+- Every page's `<html>` and Storybook's preview carry `class="dark"`, which keeps the generated components' `dark:` variants on; there is no `.dark` token block.
+- The look is hand-edited into `src/components/ui/*` (and `icon-sm` is 28 px); regenerating a component with the shadcn CLI drops it, so re-apply the edits after.
 - The pages are React in `.tsx`, styled with Tailwind and shadcn components and built by Vite into `dist/`; every other file is plain JavaScript.
 - `meet.js`, `background.js` and `manifest.json` are copied into `dist/` unchanged.
 - The built extension makes no network request.
@@ -68,3 +75,5 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - A table that scrolls sideways sits in `div[role=region][aria-label][tabIndex=0].overflow-x-auto` with a visible `rounded-md border` and the `scroll-shadow-x` utility from `src/index.css` > a `div` with the minimum width > `Table`; the width never goes on `Table`.
 - Hand-written components declare no return type.
 - List rows are keyed by their stable identity: a student by name key, a room by its name, a working group by its id; rows with no control may be keyed by index.
+- Every panel row uses the one row grid in `Panel.tsx`: the name cell first, then fixed trailing columns; a row action is an icon button whose label is its tooltip and accessible name.
+- A room's pill, rows and tally cluster all draw from `roomPeople` in `Panel.tsx` (members, then students placed after Fill); pages do not read the summary's `room.active` or `room.units`.
