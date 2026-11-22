@@ -85,7 +85,7 @@ export function Panel({ view, actions, rosterHref, onOpenRoster, fake }: {
 }
 
 function Session(parts: Parts) {
-  const { session, actions, locked } = parts;
+  const { session, actions } = parts;
   return (
     <div className="flex flex-col gap-5">
       <Tally {...parts} />
@@ -96,21 +96,28 @@ function Session(parts: Parts) {
       <Unclear {...parts} />
       <NoAnswer {...parts} />
       <Ignored {...parts} />
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="mix"
-          checked={session.mixWorkingGroups}
-          disabled={locked}
-          onCheckedChange={checked => actions.setMix(checked === true)}
-        />
-        <Label htmlFor="mix">Mix working groups this time</Label>
-      </div>
+      {!session.hasPlan && <MixCheckbox {...parts} />}
       <div className="flex flex-wrap justify-end gap-2">
         {!session.hasPlan && <Button onClick={() => actions.split()}>Split</Button>}
         <Button variant="outline" disabled={session.filling} onClick={() => actions.end()}>
           {session.endArmed ? 'Press again to end' : 'End'}
         </Button>
       </div>
+    </div>
+  );
+}
+
+// The checkbox that changes what Split and Re-split do: drawn just above the one on screen.
+function MixCheckbox({ session, actions, locked }: Parts) {
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox
+        id="mix"
+        checked={session.mixWorkingGroups}
+        disabled={locked}
+        onCheckedChange={checked => actions.setMix(checked === true)}
+      />
+      <Label htmlFor="mix">Mix working groups this time</Label>
     </div>
   );
 }
@@ -134,7 +141,7 @@ const ICON = '1.75rem';
 const PICK = '7rem';
 const cols = (...trailing: string[]) => ({ gridTemplateColumns: ['minmax(0, 1fr)', ...trailing].join(' ') });
 
-const Name = ({ children }: { children: string }) => <span className="min-w-0 truncate font-medium" title={children}>{children}</span>;
+const Name = ({ children }: { children: string }) => <span className="min-w-0 truncate" title={children}>{children}</span>;
 const NewBadge = ({ isNew }: { isNew: boolean }) => (isNew ? <Badge variant="secondary">new</Badge> : null);
 
 // An action shown as its icon; the label is its tooltip and accessible name.
@@ -329,7 +336,8 @@ function MemberRow({ member, roomStage, actions, locked }: { member: Member; roo
   );
 }
 
-function Rooms({ session, actions, members, locked }: Parts) {
+function Rooms(parts: Parts) {
+  const { session, actions, members, locked } = parts;
   const { fillResult } = session;
   const fillText = session.filling ? 'Filling rooms…' : session.ownerCreatesRooms ? 'Fill names' : 'Fill breakout rooms';
   return (
@@ -361,6 +369,7 @@ function Rooms({ session, actions, members, locked }: Parts) {
           )}
         </Alert>
       )}
+      <MixCheckbox {...parts} />
       <div className="flex flex-wrap items-center justify-end gap-2">
         {session.filled && <span className={muted}>Change rooms in Meet directly.</span>}
         <Button variant="outline" disabled={locked} onClick={() => actions.split()}>Re-split</Button>
@@ -383,7 +392,7 @@ function NotInRoom({ session, actions, members }: Parts) {
           <li key={n.key} className={row} style={cols(PICK, ICON)}>
             <span className="flex min-w-0 items-center gap-1.5">
               <Name>{n.name}</Name>
-              {n.guess && n.stage && <span className={`truncate ${muted}`}>{`last: ${stageLabel(n.stage)}`}</span>}
+              {n.guess && n.stage && <span className={`truncate ${muted}`}>{`Last: ${stageLabel(n.stage)}`}</span>}
             </span>
             <StageSelect value={members.get(n.key)!.stage} onChange={code => actions.setStage(n.key, code)} label={`Stage for ${n.name}`} />
             <IconButton
@@ -443,7 +452,7 @@ function NoAnswer({ session, actions }: Parts) {
           <span className="flex min-w-0 items-center gap-1.5">
             <Name>{n.name}</Name>
             <NewBadge isNew={n.isNew} />
-            {n.lastStage && <span className={`truncate ${muted}`}>{`last: ${stageLabel(n.lastStage)}`}</span>}
+            {n.lastStage && <span className={`truncate ${muted}`}>{`Last: ${stageLabel(n.lastStage)}`}</span>}
           </span>
           <StageSelect value={null} onChange={code => actions.setStage(n.key, code)} label={`Stage for ${n.name}`} disabled={session.filling} />
           <IconButton label={`Ignore ${n.name}`} disabled={session.filling} onClick={() => actions.setIgnored(n.key, true)}>

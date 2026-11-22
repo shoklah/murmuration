@@ -3,7 +3,7 @@ import { STAGES } from '@/logic/stages.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
- * The stage dropdown: its options are STAGES (value = code, text = label), its placeholder is `stage…`.
+ * The stage dropdown: its options are STAGES (value = code, text = label), its placeholder is `Stage…`.
  * `compact` draws the trigger as a 28 px icon button (two arrows, `label` as its tooltip) that opens the same list.
  */
 export function StageSelect({ value, onChange, label, disabled, compact }: {
@@ -27,7 +27,7 @@ export function StageSelect({ value, onChange, label, disabled, compact }: {
         </SelectTrigger>
       ) : (
         <SelectTrigger size="sm" aria-label={label} className="w-full data-[size=sm]:h-7">
-          <SelectValue placeholder="stage…" />
+          <SelectValue placeholder="Stage…" />
         </SelectTrigger>
       )}
       <SelectContent position={compact ? 'popper' : 'item-aligned'}>
