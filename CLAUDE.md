@@ -11,6 +11,8 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Look and rows spec: `docs/superpowers/specs/2026-11-22-look-and-rows-design.md`
 - Look and rows plan: `docs/superpowers/plans/2026-11-22-look-and-rows.md`
 - UI backlog (the kit's audit): `docs/ui-backlog.md`
+- UI backlog fixes spec: `docs/superpowers/specs/2026-11-22-ui-backlog-fixes-design.md`
+- UI backlog fixes plan: `docs/superpowers/plans/2026-11-22-ui-backlog-fixes.md`
 
 ## Commands
 
@@ -44,7 +46,7 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - The look follows `DESIGN.md`; the extension is dark only, so tokens in `src/index.css` hold one value each under `:root` and the light values live in `DESIGN.md`.
 - The font is a bundled `woff2` in `src/fonts/`, declared in `src/index.css`.
 - Every page's `<html>` and Storybook's preview carry `class="dark"`, which keeps the generated components' `dark:` variants on; there is no `.dark` token block.
-- The look is hand-edited into `src/components/ui/*` (and `icon-sm` is 28 px); regenerating a component with the shadcn CLI drops it, so re-apply the edits after.
+- The look is hand-edited into `src/components/ui/*` (`icon-sm` is 28 px, and `Input` and `Textarea` are `text-sm` at every width); regenerating a component with the shadcn CLI drops it, so re-apply the edits after.
 - The pages are React in `.tsx`, styled with Tailwind and shadcn components and built by Vite into `dist/`; every other file is plain JavaScript.
 - `meet.js`, `background.js` and `manifest.json` are copied into `dist/` unchanged.
 - The built extension makes no network request.
