@@ -16,7 +16,7 @@
 
 - Not touched: `src/logic/`, `src/meet/`, `src/store.js`, `src/panel/controller.js`, `src/panel/meet-client.js`, `src/background.js`, `manifest.json`, `src/panel/fake-states.js`, `src/panel/demo.js`.
 - The built extension makes no network request. The font is a file in the repo; no font package is added to `package.json`.
-- No colour, radius, font or shadow literal in a component: they are tokens in `src/index.css`. Layout-only arbitrary values (grid templates, sizes) are allowed. No `!important` utility (`h-7!`) anywhere in a component.
+- No colour, radius, font or shadow literal in a component: they are tokens in `src/index.css`. Layout-only arbitrary values (grid templates, sizes) are allowed. No `!important` utility (`h-7!`) in a hand-written component; the one the generated `badge.tsx` already has (`[&>svg]:size-3!`) stays.
 - Dark only: tokens hold one value each under `:root`; there is no `.dark` block and no light value in code.
 - No new shadcn component, and no new shared component: `IconButton` and the cluster are functions inside `Panel.tsx`.
 - Chat text and display names are React text children. Hand-written components declare no return type and import `cn` from `@/lib/utils`.
@@ -28,18 +28,19 @@
 
 The project has no test runner for components, and the spec keeps it so. These five are what no test exercises; each names where a reviewer sees it.
 
-1. **A long display name** in every row type: it truncates with its full text as tooltip, and the trailing icons stay in their columns. Seen at 375 px on `?fake&at=split`; checked in the diff by `min-w-0` and `truncate` on every name cell.
+1. **A long display name** in every row type: it truncates with its full text as tooltip, and the trailing icons stay in their columns. The demo's names are too short to truncate, so no capture shows it: checked in the diff by `min-w-0` and `truncate` on every name cell, and a `title` holding the full name.
 2. **A room of one, two, and an odd number of students:** one or two marks sit in one row; from three, the top row holds half rounded up. Checked in the diff of `RoomCluster`; `?fake&at=split` shows several sizes.
-3. **A student placed after Fill:** they count in the room's cluster and its pill, with their star if active, so both agree with the room's rows. Checked in the diff: the cluster, the pill and the rows all read `roomPeople`.
+3. **A student placed after Fill:** they count in the room's cluster and its pill, with their star if active and their working group's tie and diamond, so both agree with the room's rows. Checked in the diff: the cluster, the pill and the rows all read `roomPeople`.
 4. **Mix working groups on:** no tie in any cluster; the member row's diamond is unchanged. Checked in the diff.
-5. **A room member who is not on the roster:** the star column stays, empty, so change-stage and ignore line up with the rows above. Seen on `?fake&at=split` when the demo has a `new` student in a room; else checked in the diff.
+5. **A room member who is not on the roster:** the star column stays, empty, so change-stage and ignore line up with the rows above. The demo cannot produce one (every room member it makes is on the roster), so it is checked in the diff only.
 
 ## Notes for the session running implementation
 
 - **Kits:** `ui [react-tailwind-shadcn]` on tasks 1 to 4. The project carries `adopted: no`: adoption is pending and is not started here.
 - **Before captures.** Before Task 1, run the kit's screens check with `--capture-only` on `/src/panel/panel.html?fake&at=split` at 375 px into `<the kit output folder>/before`. At the finish, show the owner that capture beside the same screen from Task 4's kit check: the spec's last "Done when" line is their approval of it.
 - **Mockups** for `kit-reviewer`: `~/.claude/workflow-archive/2026-11-22-claude-ui-look-cb6304-plan-kit/approved/` (panel before Start, collecting, split, filled; 41 invented students, where the real `?fake` has 12). Where a mockup and the spec disagree, the spec wins. The roster page has no mockup: it is judged against `DESIGN.md` and the spec's points.
-- **What each kit review judges.** The mockups show the finished panel. After Task 1 only the tokens, font, type and page are in; after Task 2 the components too; the rows arrive in Task 3 and the tally in Task 4. Say so in each `kit-reviewer` dispatch, so a row not yet rebuilt is not a finding on Tasks 1 and 2.
+- **What each kit review judges.** The mockups show the finished panel. After Task 1 only the tokens, font, type and page are in; after Task 2 the components too; the rows arrive in Task 3 and the tally in Task 4. Say so in each `kit-reviewer` dispatch, so a row not yet rebuilt is not a finding on Tasks 1 and 2. In Task 2's captures each stage dropdown fills a whole line, because it is full width one task before the grid that holds it: say that too.
+- **The Fake Meet box** is a development aid drawn only under `?fake`. Its content is out of scope, its `Room: a, b, c` lines included; say so in the `kit-reviewer` dispatches.
 - **No waves:** each task builds on the one before, and three of them edit `Panel.tsx`.
 
 ## File structure
@@ -54,6 +55,7 @@ The project has no test runner for components, and the spec keeps it so. These f
 | `src/components/ui/{button,badge,input,textarea,select,checkbox,alert}.tsx` | class edits | 2 |
 | `src/components/ActiveToggle.tsx`, `src/components/StageSelect.tsx`, `StageSelect.stories.tsx` | star icon; `compact` | 2 |
 | `CLAUDE.md` | pointer and convention lines | 1, 3 |
+| `DESIGN.md` | the `field` colour, the `input` row's use | 1 |
 
 ---
 
@@ -64,7 +66,7 @@ The project has no test runner for components, and the spec keeps it so. These f
 **Failing-test check:** exempt: components only draw the controller's view; behaviour is tested in controller.js
 
 **Files:**
-- Modify: `src/index.css`, `src/panel/panel.html`, `src/roster-page/roster-page.html`, `.storybook/preview.ts`, `src/panel/Panel.tsx` (the `h1`, the `h2`s and the Roster link only), `src/roster-page/RosterPage.tsx` (the `h1`s and `h2`s only), `CLAUDE.md`
+- Modify: `src/index.css`, `src/panel/panel.html`, `src/roster-page/roster-page.html`, `.storybook/preview.ts`, `src/panel/Panel.tsx` (the `h1`, the `h2`s and the Roster link only), `src/roster-page/RosterPage.tsx` (the `h1`s and `h2`s only), `CLAUDE.md`, `DESIGN.md`
 - Create: `src/fonts/source-sans-3-latin-wght-normal.woff2`, `src/fonts/OFL.txt`
 
 **Interfaces:**
@@ -134,7 +136,7 @@ In `@layer base`, `body` keeps `text-foreground` and takes the page glow in plac
       var(--background);
   }
   a {
-    color: var(--foreground);
+    color: var(--primary);
     text-decoration: underline;
     text-decoration-color: var(--ring);
     text-underline-offset: 4px;
@@ -170,7 +172,11 @@ The room panel's sheen, beside `scroll-shadow-x`:
 
 In `Panel.tsx` and `RosterPage.tsx`, every `h1` takes `text-xl font-strong tracking-title` and every `h2` takes `font-strong` at the body size (14 px), in place of its size and weight classes. The Roster link in `Panel.tsx` loses its `className`; the base style draws it.
 
-- [ ] **Step 6: `CLAUDE.md`**
+- [ ] **Step 6: `CLAUDE.md` and `DESIGN.md`**
+
+In `DESIGN.md`, so it matches what is built: add `field: "#101216"` to the front matter's `colors` and a `field` row to the Colors table (`#101216`, the fill of fields and dropdowns) and to the Dark mode table (light: `#fffdf6`); the `input` row's use becomes `kept for the stack's components; the look's own borders are cream hairlines`.
+
+In `CLAUDE.md`:
 
 Under the spec and plan pointers add `- Look: \`DESIGN.md\`` and pointers to this spec and plan. Under `## Code conventions` add:
 
@@ -187,7 +193,7 @@ Expected: all pass; one `.woff2` file listed; `no request leaves the extension` 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add src/index.css src/fonts src/panel/panel.html src/roster-page/roster-page.html .storybook/preview.ts src/panel/Panel.tsx src/roster-page/RosterPage.tsx CLAUDE.md
+git add src/index.css src/fonts src/panel/panel.html src/roster-page/roster-page.html .storybook/preview.ts src/panel/Panel.tsx src/roster-page/RosterPage.tsx CLAUDE.md DESIGN.md
 git commit -m "feat: the plumage theme — tokens, the bundled font, type and the page glow"
 ```
 
@@ -273,10 +279,10 @@ git commit -m "feat: the components take the plumage look; a compact stage dropd
 - Produces, inside `Panel.tsx`, for Task 4:
   - `IconButton({ label, pressed, disabled, onClick, children })`: `label: string; pressed?: boolean; disabled?: boolean; onClick: () => void; children: ReactNode`.
   - `roomPeople(room: RoomSummary, members: Map<string, Member>): Member[]`: the room's members then its placed students.
-  - `RoomSize({ room, members })`: the count pill.
+  - `RoomSize({ room, members, ties })`: the count pill; `ties` is `!session.mixWorkingGroups`.
   - `Name`, which now truncates, and `muted`.
 
-`git show c32214b:src/panel/Panel.tsx` has these rows as the owner picked them. Port into the current file only what the steps name; do not start from the try-out's whole file, which predates Task 1 (its headings and Roster link are the old ones). `Tally` and `RoomDots` there are Task 4's; the current `Tally` stays as it is until then, with `roomSize` kept for it.
+`git show c32214b:src/panel/Panel.tsx` has these rows as the owner picked them. Port into the current file only what the steps name; do not start from the try-out's whole file, which predates Task 1 (its headings and Roster link are the old ones). `Tally` and `RoomDots` there are Task 4's; the current `Tally` stays as it is until then, with `roomSize` and `rowClass` kept for it.
 
 - [ ] **Step 1: The row grid and `IconButton`**
 
@@ -290,6 +296,7 @@ Differences from the try-out, for the whole file:
 
 As the try-out's `MemberRow`, `NotInRoom`, `Flags`, `Unclear`, `NoAnswer`, `Ignored` and `SplitGroups`, and the spec's row table. Icons from `lucide-react`: `EyeOff` (ignore), `Eye` (restore), `Check` (placed), `Diamond` (working group). Differences and pinned values:
 
+- **Names:** every name's `title` is the full name. In a member row, where today's tooltip is the chat message, it is `<name>: <message>` when there is a message, as one template string.
 - **Member row:** the star column is always there; a student not on the roster leaves its cell empty (an empty `<span />`). So the trailing columns are icon, and before Fill two more icons.
 - **Labels:** `Change stage for <name>`, `Ignore <name>`, `Restore <name>`, `<name> is placed in <room>`, and `No room to place <name> in` on the disabled placed button.
 - **Not in a room yet:** the hint line under the row is exactly `Suggested: <room>`, `No room fits <stage label>` or `No stage yet`; `last: <stage label>` shows beside the name when the stage is a guess.
@@ -299,7 +306,7 @@ As the try-out's `MemberRow`, `NotInRoom`, `Flags`, `Unclear`, `NoAnswer`, `Igno
 - [ ] **Step 3: Room panels, `roomPeople` and the count pill**
 
 - Each room is an `li` with `sheen rounded-lg border border-line bg-card` and padding `8px 10px 4px`; rooms sit 12 px apart. Its first line is the room's name (`font-strong`) and `RoomSize`, over a `border-b border-line`; its member rows follow, drawn from `roomPeople`.
-- `RoomSize` is a `Badge` in its default variant with `font-bold tabular-nums`: the size is `roomPeople(...).length`, then one filled `Star` per active student among them, then one filled `Diamond` per `room.units`. *(The spec counts placed students in the pill; `room.units` comes from the controller and is left as it is.)*
+- `RoomSize` is a `Badge` in its default variant with `font-bold tabular-nums`: the size is `roomPeople(...).length`, then one filled `Star` per active student among them, then one filled `Diamond` per working group that has two or more of them, matched on `member.group`, and none when `session.mixWorkingGroups` is on. So `RoomSize` also takes `ties: boolean`, as the cluster will. *(The controller's `room.active` and `room.units` leave placed students out, so the pill counts from `roomPeople`, as the cluster's stars and ties do.)*
 
 - [ ] **Step 4: `CLAUDE.md`**
 
@@ -330,7 +337,7 @@ git commit -m "feat: the panel's rows on one grid, icon actions and room panels"
 **Failing-test check:** exempt: components only draw the controller's view; behaviour is tested in controller.js
 
 **Files:**
-- Modify: `src/panel/Panel.tsx` (`Tally`, and the new `RoomCluster`)
+- Modify: `src/panel/Panel.tsx` (`Tally`, the new `RoomCluster`; `roomSize` and `rowClass`, which nothing uses any more, are deleted)
 
 **Interfaces:**
 - Consumes: `IconButton`, `roomPeople`, `Name`, `muted` from Task 3.
@@ -356,7 +363,7 @@ Clusters of one stage sit on one line and wrap, `gap-x-4 gap-y-1`.
 - [ ] **Step 3: Verify**
 
 Run: `npm run typecheck && npm test && npm run build && npm run check:extension && npm run build-storybook`
-Expected: all pass.
+Expected: all pass. `grep -n "data-part\|DOTS\|roomSize\|rowClass\|className=\"tie\|className=\"bird" src/panel/Panel.tsx` prints nothing.
 
 - [ ] **Step 4: Commit**
 

@@ -81,7 +81,7 @@ seen in use informs this design yet.
   components style several states only through `dark:` classes, so both pages' `<html>` and
   Storybook's preview carry `class="dark"`, which keeps that variant on, as it was in the
   mockups *(my call)*. New tokens:
-  `--star`, `--sheen-green`, `--sheen-violet`, `--line`, each mapped in `@theme inline`.
+  `--star`, `--sheen-green`, `--sheen-violet`, `--line`, `--field` (the field's fill), each mapped in `@theme inline`.
   *(my call: the stack file asks for a light and a dark value per token; with a dark-only
   extension the light values live in `DESIGN.md` only. `CLAUDE.md` records this.)*
 - **Font:** `source-sans-3-latin-wght-normal.woff2` (OFL-1.1, from
