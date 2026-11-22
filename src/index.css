@@ -126,3 +126,14 @@
     @apply font-sans;
     }
 }
+/* A sideways-scrolling region's right-edge shadow, shown while more lies to the right: a cover that
+   scrolls with the content (attachment local) hides the fixed shadow at the end or when nothing overflows. */
+@utility scroll-shadow-x {
+  background-image:
+    linear-gradient(to left, var(--background) 50%, transparent),
+    linear-gradient(to left, color-mix(in oklab, var(--foreground) 20%, transparent), transparent);
+  background-repeat: no-repeat;
+  background-attachment: local, scroll;
+  background-position: right, right;
+  background-size: calc(var(--spacing) * 8) 100%, calc(var(--spacing) * 4) 100%;
+}

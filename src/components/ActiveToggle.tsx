@@ -1,18 +1,17 @@
-import { Toggle } from '@/components/ui/toggle';
+import { Button } from '@/components/ui/button';
 
-/** The ★ button, pressed when the student is active. */
+/** The ★ button, pressed (filled) when the student is active. */
 export function ActiveToggle({ active, onToggle, label }: { active: boolean; onToggle: () => void; label: string }) {
   return (
-    <Toggle
-      variant="outline"
+    <Button
+      variant={active ? 'default' : 'outline'}
       size="sm"
-      className="aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary/90 aria-pressed:hover:text-primary-foreground"
-      pressed={active}
-      onPressedChange={() => onToggle()}
+      aria-pressed={active}
+      onClick={onToggle}
       aria-label={label}
       title={label}
     >
       ★
-    </Toggle>
+    </Button>
   );
 }

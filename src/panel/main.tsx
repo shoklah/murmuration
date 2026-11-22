@@ -3,9 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createStore } from '../store.js';
 import { createPanelController } from './controller.js';
-import { fakeAt } from './fake-states.js';
+import { fakeAt, playDemo } from './fake-states.js';
 import { findMeetTab, createMeetClient } from './meet-client.js';
-import { DEMO } from './demo.js';
 import { Panel } from './Panel';
 
 const ROSTER_PAGE = 'src/roster-page/roster-page.html';
@@ -37,7 +36,7 @@ function draw() {
           rooms: fake.meet.rooms,
           say: fake.meet.say,
           join: fake.meet.join,
-          playDemo: () => { for (const [sender, text] of DEMO.answers) fake.meet.say(sender, text); },
+          playDemo: () => playDemo(fake.meet),
         } : undefined}
       />
     </StrictMode>,

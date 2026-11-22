@@ -9,6 +9,11 @@ import { lastKnownStages } from '../logic/history.js';
 
 const STATES = ['collecting', 'split', 'filled'];
 
+/** Plays the demo's stage answers into the fake Meet's chat. */
+export function playDemo(meet) {
+  for (const [sender, text] of DEMO.answers) meet.say(sender, text);
+}
+
 /**
  * The fake Meet and the in-memory store of a `?fake` page, brought to a state.
  * Resolves to `{ meet, store }`.
@@ -22,7 +27,7 @@ export async function fakeAt(at) {
   if (step >= 0) {
     const ctx = { roster, lastStages: lastKnownStages(DEMO.history) };
     current = createSession({ startedAt: '2026-11-24T17:00:00Z', meetingCode: 'abc-defg-hij' });
-    for (const [sender, text] of DEMO.answers) meet.say(sender, text);
+    playDemo(meet);
     await syncFromMeet(meet, current, ctx);
     if (step >= 1) split(current, ctx);
     if (step >= 2) {

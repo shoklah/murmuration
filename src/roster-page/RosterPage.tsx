@@ -30,7 +30,8 @@ const REPLACE_QUESTION = 'Replace the roster and history with this file?';
 // Radix allows no option with an empty value, so "no choice" is `none` here and `null` in the roster.
 const NONE = 'none';
 
-function NullableSelect({ options, value, label, onChange }: {
+function NullableSelect({ noneText, options, value, label, onChange }: {
+  noneText: string;
   options: [string, string][];
   value: string | null;
   label: string;
@@ -42,23 +43,26 @@ function NullableSelect({ options, value, label, onChange }: {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
+        <SelectItem value={NONE}>{noneText}</SelectItem>
         {options.map(([v, text]) => <SelectItem key={v} value={v}>{text}</SelectItem>)}
       </SelectContent>
     </Select>
   );
 }
 
-function StudentRow({ studentKey, student, roster, history, act }: {
-  studentKey: string; student: Student; roster: Roster; history: SessionRecord[]; act: Act;
+const TRACK_OPTIONS = TRACKS.map((t): [string, string] => [t, trackLabel(t)]);
+
+function StudentRow({ studentKey, student, groupOptions, history, act }: {
+  studentKey: string; student: Student; groupOptions: [string, string][]; history: SessionRecord[]; act: Act;
 }) {
   const entries = timeline(history, studentKey);
-  const groupOptions: [string, string][] = [[NONE, 'none'], ...Object.entries(roster.groups).map(([id, g]): [string, string] => [id, g.name])];
   return (
     <TableRow>
       <TableCell className="whitespace-normal wrap-anywhere">{student.name}</TableCell>
       <TableCell>
         <NullableSelect
-          options={[[NONE, '–'], ...TRACKS.map((t): [string, string] => [t, trackLabel(t)])]}
+          noneText="–"
+          options={TRACK_OPTIONS}
           value={student.track}
           label={`Track for ${student.name}`}
           onChange={track => act(() => { student.track = track; })}
@@ -69,6 +73,7 @@ function StudentRow({ studentKey, student, roster, history, act }: {
       </TableCell>
       <TableCell>
         <NullableSelect
+          noneText="none"
           options={groupOptions}
           value={student.group}
           label={`Working group for ${student.name}`}
@@ -97,14 +102,13 @@ function StudentRow({ studentKey, student, roster, history, act }: {
 
 function StudentsSection({ roster, history, act }: { roster: Roster; history: SessionRecord[]; act: Act }) {
   const students = Object.entries(roster.students).sort(([, a], [, b]) => a.name.localeCompare(b.name));
+  const groupOptions = Object.entries(roster.groups).map(([id, g]): [string, string] => [id, g.name]);
   return (
     <section className="space-y-2">
       <h2 className="text-base font-semibold">Students</h2>
-      {/* The named region scrolls, not the Table's own container: the minimum width sits between them.
-          Its right edge shows a shadow while more lies to the right: a cover that scrolls with the content
-          (attachment local) hides the fixed shadow once the end is reached or when nothing overflows. */}
+      {/* The named region scrolls, not the Table's own container: the minimum width sits between them. */}
       <div
-        className="overflow-x-auto rounded-md border bg-no-repeat [background-attachment:local,scroll] [background-position:right,right] [background-size:calc(var(--spacing)*8)_100%,calc(var(--spacing)*4)_100%] [background-image:linear-gradient(to_left,var(--background)_50%,transparent),linear-gradient(to_left,color-mix(in_oklab,var(--foreground)_20%,transparent),transparent)]"
+        className="overflow-x-auto rounded-md border scroll-shadow-x"
         role="region"
         aria-label="Students"
         tabIndex={0}
@@ -128,7 +132,7 @@ function StudentsSection({ roster, history, act }: { roster: Roster; history: Se
                   </TableCell>
                 </TableRow>
               ) : students.map(([key, s]) => (
-                <StudentRow key={key} studentKey={key} student={s} roster={roster} history={history} act={act} />
+                <StudentRow key={key} studentKey={key} student={s} groupOptions={groupOptions} history={history} act={act} />
               ))}
             </TableBody>
           </Table>
