@@ -55,7 +55,7 @@ function StudentRow({ studentKey, student, roster, history, act }: {
   const groupOptions: [string, string][] = [[NONE, 'none'], ...Object.entries(roster.groups).map(([id, g]): [string, string] => [id, g.name])];
   return (
     <TableRow>
-      <TableCell className="whitespace-normal wrap-break-word">{student.name}</TableCell>
+      <TableCell className="whitespace-normal wrap-anywhere">{student.name}</TableCell>
       <TableCell>
         <NullableSelect
           options={[[NONE, '–'], ...TRACKS.map((t): [string, string] => [t, trackLabel(t)])]}
@@ -75,7 +75,7 @@ function StudentRow({ studentKey, student, roster, history, act }: {
           onChange={group => act(() => { student.group = group; })}
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="whitespace-normal wrap-anywhere">
         {entries.length === 0 ? (
           <span className="text-muted-foreground">
             <span aria-hidden="true">–</span>
@@ -101,7 +101,7 @@ function StudentsSection({ roster, history, act }: { roster: Roster; history: Se
     <section className="space-y-2">
       <h2 className="text-base font-semibold">Students</h2>
       {/* The named region scrolls, not the Table's own container: the minimum width sits between them. */}
-      <div className="overflow-x-auto" role="region" aria-label="Students" tabIndex={0}>
+      <div className="overflow-x-auto rounded-md border" role="region" aria-label="Students" tabIndex={0}>
         <div className="min-w-2xl">
           <Table>
             <TableHeader>
