@@ -52,6 +52,15 @@ function NullableSelect({ noneText, options, value, label, onChange }: {
 
 const TRACK_OPTIONS = TRACKS.map((t): [string, string] => [t, trackLabel(t)]);
 
+function Unknown({ label }: { label: string }) {
+  return (
+    <span className="text-muted-foreground">
+      <span aria-hidden="true">–</span>
+      <span className="sr-only">{label}</span>
+    </span>
+  );
+}
+
 function StudentRow({ studentKey, student, groupOptions, history, act }: {
   studentKey: string; student: Student; groupOptions: [string, string][]; history: SessionRecord[]; act: Act;
 }) {
@@ -82,10 +91,7 @@ function StudentRow({ studentKey, student, groupOptions, history, act }: {
       </TableCell>
       <TableCell className="whitespace-normal wrap-anywhere">
         {entries.length === 0 ? (
-          <span className="text-muted-foreground">
-            <span aria-hidden="true">–</span>
-            <span className="sr-only">no sessions yet</span>
-          </span>
+          <Unknown label="no sessions yet" />
         ) : (
           <div className="flex flex-wrap gap-1">
             {entries.map(entry => (
@@ -93,14 +99,9 @@ function StudentRow({ studentKey, student, groupOptions, history, act }: {
                 key={entry.startedAt}
                 variant="outline"
                 title={entry.startedAt.slice(0, 10)}
-                className={entry.stage === null ? 'text-muted-foreground' : entry.source === 'guess' ? 'italic text-muted-foreground' : undefined}
+                className={entry.source === 'guess' ? 'italic text-muted-foreground' : undefined}
               >
-                {entry.stage === null ? (
-                  <>
-                    <span aria-hidden="true">–</span>
-                    <span className="sr-only">no stage</span>
-                  </>
-                ) : stageLabel(entry.stage)}
+                {entry.stage === null ? <Unknown label="no stage" /> : stageLabel(entry.stage)}
               </Badge>
             ))}
           </div>
