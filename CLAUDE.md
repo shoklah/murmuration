@@ -45,7 +45,6 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - Students are keyed by `nameKey(displayName)` from `src/logic/roster.js`; never compare raw display names.
 - Roster, history and the current session are plain JSON objects, changed in place by logic functions and saved whole through `src/store.js` under `chrome.storage.local` keys `roster`, `history`, `current`.
 - Pages may set a roster student's `track`, `active` or `group`, a group's `name` and `ownerNames` directly; adding students or groups goes through `src/logic/roster.js`.
-- DOM helpers shared by the extension pages (`el`, `button`, `$`) live in `src/dom.js`.
 - Hand-written components import `cn` from `@/lib/utils`; only the generated `src/components/ui/*` import it from `"cn"`.
 - Every component `.tsx` has a `<name>.stories.tsx` beside it in Storybook's object form (`satisfies Meta<typeof X>`), with callbacks from `fn()` of `storybook/test` and no `play` assertions.
 - Meet operations resolve to `{ ok: true, ... }` or `{ ok: false, op, error }` and never throw; `error` is a sentence the owner can act on.
@@ -64,3 +63,5 @@ from Google Meet's chat, groups them by stage and fills Meet's breakout panel.
 - A `Select` option meaning "no value" uses the value `none`, mapped to and from `null` at the component.
 - Page text fields that save to the store are uncontrolled (`defaultValue`), save on blur when changed, and are keyed by the saved value.
 - A table that scrolls sideways sits in `div[role=region][aria-label][tabIndex=0].overflow-x-auto` with a visible `rounded-md border` and a right-edge scroll shadow (a `local` background cover over a `scroll` gradient, theme tokens only) > a `div` with the minimum width > `Table`; the width never goes on `Table`.
+- Hand-written components declare no return type.
+- List rows are keyed by their stable identity: a student by name key, a room by its name, a working group by its id; only plain message lines are keyed by index.
