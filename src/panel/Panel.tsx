@@ -1,6 +1,7 @@
 import type { FormEvent, ReactNode } from 'react';
 import { Check, Diamond, Eye, EyeOff, Star } from 'lucide-react';
 import { stageLabel } from '@/logic/stages.js';
+import { nameKey } from '@/logic/roster.js';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -137,10 +138,11 @@ const Name = ({ children }: { children: string }) => <span className="min-w-0 tr
 const NewBadge = ({ isNew }: { isNew: boolean }) => (isNew ? <Badge variant="secondary">new</Badge> : null);
 
 // An action shown as its icon; the label is its tooltip and accessible name.
+// A disabled Button takes no pointer events, so a wrapper carries the tooltip then.
 function IconButton({ label, pressed, disabled, onClick, children }: {
   label: string; pressed?: boolean; disabled?: boolean; onClick: () => void; children: ReactNode;
 }) {
-  return (
+  const button = (
     <Button
       variant={pressed ? 'secondary' : 'ghost'}
       size="icon-sm"
@@ -154,6 +156,7 @@ function IconButton({ label, pressed, disabled, onClick, children }: {
       {children}
     </Button>
   );
+  return disabled ? <span className="flex" title={label}>{button}</span> : button;
 }
 
 // A room's people: its members, then the students placed in it after Fill.
@@ -234,30 +237,25 @@ function Tally({ session, actions, locked }: Parts) {
 }
 
 function SplitGroups({ session }: { session: SessionView }) {
-  const groups = session.summary.splitGroups;
-  if (groups.length === 0) return null;
   return (
-    <section className="flex flex-col gap-1">
-      <h2 className="font-strong">Working groups split by stage</h2>
-      <ul className="flex flex-col gap-1">
-        {groups.map((g, i) => (
-          <li key={i}>
-            <span className={`flex min-w-0 items-center gap-1.5 ${muted}`}>
-              <Diamond className="size-2.5 shrink-0 fill-current" />
-              <span className="min-w-0 truncate" title={g.group ?? 'Working group'}>{g.group ?? 'Working group'}</span>
-            </span>
-            <ul>
-              {g.members.map(m => (
-                <li key={m.name} className={row} style={cols('auto')}>
-                  <span className="min-w-0 truncate" title={m.name}>{m.name}</span>
-                  <span className={muted}>{stageLabel(m.stage)}</span>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Section title="Working groups split by stage">
+      {session.summary.splitGroups.map((g, i) => (
+        <li key={i} className="not-first:pt-1">
+          <span className={`flex min-w-0 items-center gap-1.5 ${muted}`}>
+            <Diamond className="size-2.5 shrink-0 fill-current" />
+            <span className="min-w-0 truncate" title={g.group ?? 'Working group'}>{g.group ?? 'Working group'}</span>
+          </span>
+          <ul>
+            {g.members.map(m => (
+              <li key={nameKey(m.name)} className={row} style={cols('auto')}>
+                <span className="min-w-0 truncate" title={m.name}>{m.name}</span>
+                <span className={muted}>{stageLabel(m.stage)}</span>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </Section>
   );
 }
 
@@ -386,7 +384,7 @@ function Unclear({ session, actions, locked }: Parts) {
   return (
     <Section title="Unclear">
       {session.summary.unclear.map(u => (
-        <li key={u.key} className={row} style={cols(PICK, ICON)}>
+        <li key={u.key} className={`${row} pb-1`} style={cols(PICK, ICON)}>
           <span className="flex min-w-0 items-center gap-1.5">
             <Name>{u.name}</Name>
             <NewBadge isNew={u.isNew} />
@@ -395,7 +393,7 @@ function Unclear({ session, actions, locked }: Parts) {
           <IconButton label={`Ignore ${u.name}`} disabled={locked} onClick={() => actions.setIgnored(u.key, true)}>
             <EyeOff />
           </IconButton>
-          <ClampedText text={u.text} className={`col-span-3 pb-1 ${muted}`} />
+          <ClampedText text={u.text} className={`col-span-3 ${muted}`} />
         </li>
       ))}
     </Section>
