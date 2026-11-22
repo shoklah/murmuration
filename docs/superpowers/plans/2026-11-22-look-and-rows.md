@@ -37,11 +37,10 @@ The project has no test runner for components, and the spec keeps it so. These f
 ## Notes for the session running implementation
 
 - **Kits:** `ui [react-tailwind-shadcn]` on tasks 1 to 4. The project carries `adopted: no`: adoption is pending and is not started here.
-- **Before captures.** Before Task 1, run the kit's screens check with `--capture-only` on the five `screens:` of `CLAUDE.md` at 375 and 1440 px into `<the kit output folder>/before`. At the finish, capture the same into `after` and show the owner one before-and-after pair of `?fake&at=split` at 375 px: the spec's last "Done when" line is their approval of it.
+- **Before captures.** Before Task 1, run the kit's screens check with `--capture-only` on `/src/panel/panel.html?fake&at=split` at 375 px into `<the kit output folder>/before`. At the finish, show the owner that capture beside the same screen from Task 4's kit check: the spec's last "Done when" line is their approval of it.
 - **Mockups** for `kit-reviewer`: `~/.claude/workflow-archive/2026-11-22-claude-ui-look-cb6304-plan-kit/approved/` (panel before Start, collecting, split, filled; 41 invented students, where the real `?fake` has 12). Where a mockup and the spec disagree, the spec wins. The roster page has no mockup: it is judged against `DESIGN.md` and the spec's points.
 - **What each kit review judges.** The mockups show the finished panel. After Task 1 only the tokens, font, type and page are in; after Task 2 the components too; the rows arrive in Task 3 and the tally in Task 4. Say so in each `kit-reviewer` dispatch, so a row not yet rebuilt is not a finding on Tasks 1 and 2.
 - **No waves:** each task builds on the one before, and three of them edit `Panel.tsx`.
-- **After Task 4**, besides the usual checks: `npm run build && npm run check:extension` and `npm run build-storybook`.
 
 ## File structure
 
@@ -141,7 +140,7 @@ In `@layer base`, `body` keeps `text-foreground` and takes the page glow in plac
     text-underline-offset: 4px;
   }
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
+    * { transition: none !important; }
   }
 ```
 
@@ -277,7 +276,7 @@ git commit -m "feat: the components take the plumage look; a compact stage dropd
   - `RoomSize({ room, members })`: the count pill.
   - `Name`, which now truncates, and `muted`.
 
-Start from `git show c32214b:src/panel/Panel.tsx`, which has these rows as the owner picked them, and apply the differences below. `Tally` and `RoomDots` there are Task 4's.
+`git show c32214b:src/panel/Panel.tsx` has these rows as the owner picked them. Port into the current file only what the steps name; do not start from the try-out's whole file, which predates Task 1 (its headings and Roster link are the old ones). `Tally` and `RoomDots` there are Task 4's; the current `Tally` stays as it is until then, with `roomSize` kept for it.
 
 - [ ] **Step 1: The row grid and `IconButton`**
 
