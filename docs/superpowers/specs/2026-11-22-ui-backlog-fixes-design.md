@@ -55,7 +55,7 @@ diff that produced them (`mockup.diff`).
 - **Screens:** `/src/panel/panel.html?fake&at=collecting`, `…&at=split`, `…&at=filled`,
   `/src/roster-page/roster-page.html?fake`; item 9 also touches `/src/panel/panel.html?fake`.
 - **Components:** all existing (`Badge` outline, `Button` outline, `ClampedText`, `StageSelect`,
-  `Checkbox`, `Input`); `ClampedText` and `ui/input.tsx` are adapted. Their stories stay valid.
+  `Checkbox`, `Input`, `Textarea`); `ClampedText`, `ui/input.tsx` and `ui/textarea.tsx` are adapted. Their stories stay valid.
 
 ## Rulings on the rest of the backlog
 
